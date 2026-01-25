@@ -22,6 +22,5 @@ vulnerable_workflows/
 .github/
 .vscode/
 coverage/
-credentials/
 *.log
 .DS_Store
