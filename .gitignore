@@ -41,9 +41,6 @@ docs/04-PRD-PHASE-4-OUTPUT-AND-RELEASE.md
 PROGRESS.md
 CLAUDE.md
 
-# Credentials (sensitive)
-credentials/
-
 # OS files
 .DS_Store
 Thumbs.db
