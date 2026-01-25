@@ -84,14 +84,48 @@ First public release of RiskVoid Security Scanner for n8n workflows.
 
 ## [Unreleased]
 
-### Planned for v1.1.0
+### Planned
 
 - Enhanced taint path value resolution
 - Additional sink node types (SSH, Function, MariaDB, Oracle)
 - Improved SQL injection detection for parameterized queries
 - SSRF bypass pattern detection (URL encoding, IPv6)
 - Python code injection pattern enhancements
+- Conventional commits enforcement
+- Automated changelog generation
+
+## [1.1.0] - 2026-01-25
+
+### Added
+
+- **Comprehensive Documentation Suite**
+  - Quick Start Guide - 5-minute setup instructions
+  - Complete User Guide - Full feature documentation with examples
+  - Troubleshooting Guide - Common issues and solutions
+  - API credentials setup instructions with step-by-step guide
+  - Example workflows for common use cases
+- **Development Workflow Documentation**
+  - Git branching strategy (Gitflow)
+  - Branch naming conventions
+  - PR workflow and release process
+  - Version bumping guidelines
+  - CHANGELOG.md format standards
+
+### Fixed
+
+- Node icon transparency issue
+  - Replaced broken SVG with proper transparent icon
+  - Fixed viewBox coordinates for correct rendering
+
+### Changed
+
+- Updated README with documentation links
+- Improved npm badge caching (reduced to 5 minutes)
+- Enhanced GitHub Actions workflow error handling
+- Updated icon file structure (riskvoid-logo.svg)
 
 ---
 
+[unreleased]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/releases/tag/v1.0.0
