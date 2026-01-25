@@ -19,14 +19,14 @@ RiskVoid is an n8n community node that performs static security analysis on your
 
 ## Features
 
-✅ **6 Vulnerability Types** - Comprehensive coverage of n8n security risks
-✅ **18+ Taint Sources** - Tracks untrusted input from webhooks, forms, emails, etc.
-✅ **16+ Security Sinks** - Monitors dangerous operations (code execution, database queries, HTTP requests)
-✅ **Smart Taint Analysis** - Traces data flow through complex workflow graphs
-✅ **Sanitizer Detection** - Recognizes IF/Switch/Filter nodes that reduce risk
-✅ **4 Export Formats** - JSON, HTML reports, Slack notifications, SARIF for CI/CD
-✅ **100% Local** - No telemetry, all analysis happens in-process
-✅ **81% Detection Accuracy** - Tested on 80 realistic vulnerable workflows
+- ✅ **6 Vulnerability Types** - Comprehensive coverage of n8n security risks
+- ✅ **18+ Taint Sources** - Tracks untrusted input from webhooks, forms, emails, etc.
+- ✅ **16+ Security Sinks** - Monitors dangerous operations (code execution, database queries, HTTP requests)
+- ✅ **Smart Taint Analysis** - Traces data flow through complex workflow graphs
+- ✅ **Sanitizer Detection** - Recognizes IF/Switch/Filter nodes that reduce risk
+- ✅ **4 Export Formats** - JSON, HTML reports, Slack notifications, SARIF for CI/CD
+- ✅ **100% Local** - No telemetry, all analysis happens in-process
+- ✅ **81% Detection Accuracy** - Tested on 80 realistic vulnerable workflows
 
 ## Installation
 
