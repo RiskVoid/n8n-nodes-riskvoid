@@ -90,7 +90,7 @@ export class RiskVoid implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'RiskVoid Security',
 		name: 'riskVoid',
-		icon: 'file:riskvoid.svg',
+		icon: 'file:riskvoid-logo.svg',
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',

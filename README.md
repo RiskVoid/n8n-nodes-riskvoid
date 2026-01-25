@@ -6,6 +6,12 @@
 
 > **The first security scanner for n8n workflows** - Detect vulnerabilities before they reach production. 100% local, no data leaves your instance.
 
+## 📚 Documentation
+
+- **[Quick Start Guide](docs/QUICK-START.md)** - Get started in 5 minutes
+- **[Complete User Guide](docs/USER-GUIDE.md)** - Comprehensive documentation with examples
+- **[Architecture Overview](docs/00-POC-OVERVIEW.md)** - Technical deep-dive
+
 ## What is RiskVoid?
 
 RiskVoid is an n8n community node that performs static security analysis on your workflows. It detects critical vulnerabilities like:
