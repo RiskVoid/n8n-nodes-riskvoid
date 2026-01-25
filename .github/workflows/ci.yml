@@ -24,6 +24,9 @@ jobs:
       - name: Run build
         run: 'npm run build'
 
+      - name: Debug - List dist folder
+        run: 'ls -la dist/credentials/ && cat dist/credentials/RiskVoidN8nApi.credentials.js | head -20'
+
       - name: Run lint
         run: 'npm run lint'
 
