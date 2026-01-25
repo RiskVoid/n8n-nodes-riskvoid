@@ -25,7 +25,7 @@ jobs:
         run: 'npm run build'
 
       - name: Debug - List dist folder
-        run: 'ls -la dist/credentials/ && cat dist/credentials/RiskVoidN8nApi.credentials.js | head -20'
+        run: 'ls -la dist/ || echo "dist folder does not exist"; ls -la credentials/ || echo "credentials source folder does not exist"'
 
       - name: Run lint
         run: 'npm run lint'
