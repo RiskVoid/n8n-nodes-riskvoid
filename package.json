@@ -1,5 +1,5 @@
 {
-	"name": "n8n-nodes-riskvoid",
+	"name": "@riskvoid/n8n-nodes-riskvoid",
 	"version": "1.0.0",
 	"description": "RiskVoid Security - Your ultimate n8n workflow security scanner. Detect code injection, SSRF, SQL injection, prompt injection, and credential exposure before they reach production.",
 	"license": "MIT",

@@ -33,7 +33,7 @@ RiskVoid is an n8n community node that performs static security analysis on your
 ### Via npm (Recommended)
 
 ```bash
-npm install n8n-nodes-riskvoid
+npm install @riskvoid/n8n-nodes-riskvoid
 ```
 
 Then restart your n8n instance. The RiskVoid Security node will appear in the node panel.
@@ -41,7 +41,7 @@ Then restart your n8n instance. The RiskVoid Security node will appear in the no
 ### Via n8n Community Nodes
 
 1. Go to **Settings** → **Community Nodes**
-2. Click **Install** and enter: `n8n-nodes-riskvoid`
+2. Click **Install** and enter: `@riskvoid/n8n-nodes-riskvoid`
 3. Click **Install**
 4. Restart n8n
 
