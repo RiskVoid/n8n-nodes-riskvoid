@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Internal documentation (DO NOT PUBLISH)
+docs/prd/
+docs/guides/
+docs/00-POC-OVERVIEW.md
+docs/01-PRD-PHASE-1-FOUNDATION.md
+docs/02-PRD-PHASE-2-ANALYSIS-ENGINE.md
+docs/03-PRD-PHASE-3-DETECTION-RULES.md
+docs/04-PRD-PHASE-4-OUTPUT-AND-RELEASE.md
+PROGRESS.md
+CLAUDE.md
+
+# Test data (DO NOT PUBLISH)
+vulnerable_workflows/
+
+# Credentials (sensitive)
+credentials/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

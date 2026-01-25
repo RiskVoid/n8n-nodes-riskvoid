@@ -1,0 +1,66 @@
+{
+	"name": "n8n-nodes-riskvoid",
+	"version": "1.0.0",
+	"description": "RiskVoid Security - Your ultimate n8n workflow security scanner. Detect code injection, SSRF, SQL injection, prompt injection, and credential exposure before they reach production.",
+	"license": "MIT",
+	"homepage": "https://github.com/ruslan-sazonov/n8n-nodes-riskvoid#readme",
+	"keywords": [
+		"n8n-community-node-package",
+		"n8n",
+		"security",
+		"scanner",
+		"vulnerability",
+		"workflow",
+		"taint-analysis"
+	],
+	"author": {
+		"name": "Ruslan Sazonov",
+		"email": "hello@riskvoid.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ruslan-sazonov/n8n-nodes-riskvoid.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/issues",
+		"email": "hello@riskvoid.com"
+	},
+	"scripts": {
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"test:coverage": "jest --coverage",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/N8nApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/RiskVoid/RiskVoid.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "*",
+		"@types/jest": "^29.5.14",
+		"eslint": "9.32.0",
+		"jest": "^29.7.0",
+		"prettier": "3.6.2",
+		"release-it": "^19.0.4",
+		"ts-jest": "^29.2.6",
+		"typescript": "5.9.2"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}

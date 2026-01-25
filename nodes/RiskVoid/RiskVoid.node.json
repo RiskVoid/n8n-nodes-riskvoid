@@ -1,0 +1,14 @@
+{
+	"node": "n8n-nodes-riskvoid.riskVoid",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Development", "Developer Tools"],
+	"resources": {
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/riskvoid/n8n-nodes-riskvoid"
+			}
+		]
+	},
+	"alias": ["security", "scan", "vulnerability", "audit", "riskvoid", "scanner", "taint", "injection", "ssrf"]
+}

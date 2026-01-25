@@ -1,0 +1,97 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.0] - 2026-01-25
+
+### Initial Release 🎉
+
+First public release of RiskVoid Security Scanner for n8n workflows.
+
+### Added
+
+#### Core Features
+
+- **Static Security Analysis** - Analyzes n8n workflows without execution
+- **6 Vulnerability Detection Rules**:
+  - RV-RCE-001: Code Injection (eval, exec, Function constructors)
+  - RV-CMDI-001: Command Injection (shell metacharacters)
+  - RV-SQLI-001: SQL Injection (MySQL, Postgres, MongoDB, etc.)
+  - RV-SSRF-001: Server-Side Request Forgery (internal IPs, metadata)
+  - RV-PI-001: Prompt Injection (LLM manipulation)
+  - RV-CRED-001: Credential Exposure (hardcoded secrets)
+
+#### Analysis Engine
+
+- **Workflow Parser** - Parses n8n JSON workflows
+- **Graph Builder** - Constructs directed workflow graph, detects cycles
+- **Node Classifier** - Categorizes 18+ source types, 16+ sink types
+- **Expression Tracer** - Parses n8n expression syntax (`{{ $json.field }}`)
+- **Taint Analyzer** - Traces untrusted data flow through workflows
+- **Findings Reporter** - Generates risk scores and prioritized findings
+
+#### Export Formats
+
+- **JSON** - Full, summary, or findings-only detail levels
+- **HTML** - Self-contained reports with Mermaid.js diagrams
+- **Slack** - Block Kit formatted notifications
+- **SARIF 2.1.0** - CI/CD integration (GitHub Advanced Security)
+
+#### Operations
+
+- **Scan Current Workflow** - Analyzes workflow containing the node
+- **Scan by ID** - Scans any workflow via n8n API
+- **Scan Workflow JSON** - Analyzes base64-encoded workflow JSON
+
+#### Detection Capabilities
+
+- Tracks 18+ taint sources (webhook, form, email, Slack, Telegram, etc.)
+- Monitors 16+ security sinks (code execution, database, HTTP, LLM)
+- Recognizes sanitizers (IF, Switch, Filter nodes)
+- Calculates confidence levels (high, medium, low)
+- Provides CWE/OWASP references for all findings
+
+### Security
+
+- **100% Local Analysis** - No telemetry, no external API calls
+- **Privacy-First** - Workflow data never leaves your n8n instance
+- **Open Source** - MIT License, full transparency
+
+### Performance
+
+- Analysis speed: <500ms per workflow
+- Tested on 80 realistic vulnerable workflows
+- 81.25% detection accuracy
+- 488 unit and integration tests
+- 93.36% code coverage
+
+### Documentation
+
+- Comprehensive README with usage examples
+- API documentation for all export formats
+- Security rule references (CWE, OWASP, CAPEC)
+- Remediation guidance for all vulnerability types
+
+### Known Limitations
+
+- Does not detect runtime-only vulnerabilities
+- Expression value resolution through intermediate Set nodes is basic
+- Some advanced SSRF bypass techniques not yet detected
+- See internal enhancement documentation for planned improvements
+
+## [Unreleased]
+
+### Planned for v1.1.0
+
+- Enhanced taint path value resolution
+- Additional sink node types (SSH, Function, MariaDB, Oracle)
+- Improved SQL injection detection for parameterized queries
+- SSRF bypass pattern detection (URL encoding, IPv6)
+- Python code injection pattern enhancements
+
+---
+
+[1.0.0]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/releases/tag/v1.0.0

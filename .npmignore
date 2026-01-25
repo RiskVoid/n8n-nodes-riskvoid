@@ -1,0 +1,27 @@
+# Source files (only dist/ is published)
+src/
+nodes/
+test/
+*.ts
+!*.d.ts
+
+# Build config
+tsconfig.json
+jest.config.js
+eslint.config.mjs
+.prettierrc.js
+
+# Documentation (internal)
+docs/prd/
+docs/guides/
+PROGRESS.md
+CLAUDE.md
+vulnerable_workflows/
+
+# Development files
+.github/
+.vscode/
+coverage/
+credentials/
+*.log
+.DS_Store
