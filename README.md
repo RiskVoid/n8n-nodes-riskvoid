@@ -1,7 +1,7 @@
 # n8n-nodes-riskvoid
 
 ![RiskVoid Security](https://img.shields.io/badge/security-scanner-blue)
-![npm version](https://img.shields.io/npm/v/n8n-nodes-riskvoid)
+![npm version](https://img.shields.io/npm/v/%40riskvoid%2Fn8n-nodes-riskvoid)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > **The first security scanner for n8n workflows** - Detect vulnerabilities before they reach production. 100% local, no data leaves your instance.
