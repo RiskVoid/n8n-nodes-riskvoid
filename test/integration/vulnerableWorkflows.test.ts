@@ -147,12 +147,19 @@ describe('Vulnerable Workflows Integration Tests', () => {
 		clearAllRules();
 
 		// Print summary statistics
+		// eslint-disable-next-line no-console
 		console.log('\n=== Vulnerable Workflows Test Summary ===');
+		// eslint-disable-next-line no-console
 		console.log(`True Positives: ${testStats.truePositives}`);
+		// eslint-disable-next-line no-console
 		console.log(`True Negatives: ${testStats.trueNegatives}`);
+		// eslint-disable-next-line no-console
 		console.log(`False Positives: ${testStats.falsePositives}`);
+		// eslint-disable-next-line no-console
 		console.log(`False Negatives: ${testStats.falseNegatives}`);
+		// eslint-disable-next-line no-console
 		console.log(`Total Duration: ${testStats.totalDuration}ms`);
+		// eslint-disable-next-line no-console
 		console.log(
 			`Accuracy: ${((testStats.truePositives + testStats.trueNegatives) / (testStats.truePositives + testStats.trueNegatives + testStats.falsePositives + testStats.falseNegatives) * 100).toFixed(2)}%`,
 		);

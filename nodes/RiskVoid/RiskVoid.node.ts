@@ -90,7 +90,7 @@ export class RiskVoid implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'RiskVoid Security',
 		name: 'riskVoid',
-		icon: 'file:riskvoid.png',
+		icon: 'file:riskvoid.svg',
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
@@ -103,7 +103,7 @@ export class RiskVoid implements INodeType {
 		usableAsTool: true,
 		credentials: [
 			{
-				name: 'n8nApi',
+				name: 'riskVoidN8nApi',
 				required: true,
 				displayOptions: {
 					show: {

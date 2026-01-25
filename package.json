@@ -42,9 +42,9 @@
 	],
 	"n8n": {
 		"n8nNodesApiVersion": 1,
-		"strict": true,
+		"strict": false,
 		"credentials": [
-			"dist/credentials/N8nApi.credentials.js"
+			"dist/credentials/RiskVoidN8nApi.credentials.js"
 		],
 		"nodes": [
 			"dist/nodes/RiskVoid/RiskVoid.node.js"
