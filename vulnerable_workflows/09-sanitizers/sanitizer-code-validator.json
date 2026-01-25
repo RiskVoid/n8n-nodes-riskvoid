@@ -1,0 +1,103 @@
+{
+  "name": "vuln-sanitizer-004",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fetch",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-004",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "sanitizer-004"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-001",
+              "name": "url",
+              "value": "={{ $json.body.url }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-002",
+              "name": "port",
+              "value": "={{ $json.body.port }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-004",
+      "name": "Extract URL Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Validate URL and port\nconst url = $input.item.json.url;\nconst port = $input.item.json.port;\n\n// Validate port is a number\nconst portNum = parseInt(port);\nif (typeof portNum !== 'number' || isNaN(portNum)) {\n  throw new Error('Invalid port');\n}\n\n// Validate port range\nif (portNum < 1 || portNum > 65535) {\n  throw new Error('Port out of range');\n}\n\n// Validate URL format\nconst urlPattern = /^https?:\\/\\//;\nif (!urlPattern.test(url)) {\n  throw new Error('Invalid URL format');\n}\n\n// Return validated data\nreturn {\n  validatedUrl: url,\n  validatedPort: portNum\n};"
+      },
+      "id": "code-004",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.validatedUrl }}:{{ $json.validatedPort }}",
+        "options": {}
+      },
+      "id": "http-004",
+      "name": "Fetch Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract URL Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract URL Data": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Fetch Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

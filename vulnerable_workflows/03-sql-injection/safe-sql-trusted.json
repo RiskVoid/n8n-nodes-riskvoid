@@ -1,0 +1,110 @@
+{
+  "id": "safe-sqli-002",
+  "name": "SAFE - Schedule Trigger to MySQL (trusted source)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Daily Cleanup Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Calculate Cutoff Date",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "cutoffDate",
+              "value": "={{ $now.minus({days: 30}).toISO() }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Build Cleanup Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "cleanupQuery",
+              "value": "DELETE FROM temp_sessions WHERE created_at < '{{ $json.cutoffDate }}' AND status = 'expired'"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Execute Cleanup",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.cleanupQuery }}"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Log Cleanup Stats",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "Cleaned up expired sessions older than {{ $json.cutoffDate }}"
+            },
+            {
+              "name": "rowsAffected",
+              "value": "={{ $json.affectedRows }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily Cleanup Schedule": {
+      "main": [[{ "node": "Calculate Cutoff Date", "type": "main", "index": 0 }]]
+    },
+    "Calculate Cutoff Date": {
+      "main": [[{ "node": "Build Cleanup Query", "type": "main", "index": 0 }]]
+    },
+    "Build Cleanup Query": {
+      "main": [[{ "node": "Execute Cleanup", "type": "main", "index": 0 }]]
+    },
+    "Execute Cleanup": {
+      "main": [[{ "node": "Log Cleanup Stats", "type": "main", "index": 0 }]]
+    }
+  }
+}

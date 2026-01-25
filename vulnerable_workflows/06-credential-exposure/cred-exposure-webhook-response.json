@@ -1,0 +1,126 @@
+{
+  "id": "vuln-cred-007",
+  "name": "Credential Exposure via Webhook Response",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook - Get Config",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/config",
+        "httpMethod": "GET"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Set Database Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "dbHost",
+              "value": "prod-db.internal.example.com"
+            },
+            {
+              "name": "dbUser",
+              "value": "admin"
+            },
+            {
+              "name": "dbPassword",
+              "value": "SuperSecret123!@#"
+            },
+            {
+              "name": "dbName",
+              "value": "production"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Set API Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "openaiKey",
+              "value": "sk-proj-abcdefghijklmnopqrstuvwxyz1234567890"
+            },
+            {
+              "name": "stripeKey",
+              "value": "FAKE_sk_live_51AbCdEfGhIjKlMnOpQrStUvWxYz1234567890"
+            },
+            {
+              "name": "twilioSid",
+              "value": "AC1234567890abcdefghijklmnopqrstuvwxyz"
+            },
+            {
+              "name": "twilioToken",
+              "value": "1234567890abcdefghijklmnopqrstuvwx"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Build Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "environment",
+              "value": "production"
+            },
+            {
+              "name": "database",
+              "value": "={{ {\n  host: $('Set Database Config').item.json.dbHost,\n  user: $('Set Database Config').item.json.dbUser,\n  password: $('Set Database Config').item.json.dbPassword,\n  database: $('Set Database Config').item.json.dbName\n} }}"
+            },
+            {
+              "name": "apiKeys",
+              "value": "={{ {\n  openai: $('Set API Keys').item.json.openaiKey,\n  stripe: $('Set API Keys').item.json.stripeKey,\n  twilio: {\n    sid: $('Set API Keys').item.json.twilioSid,\n    token: $('Set API Keys').item.json.twilioToken\n  }\n} }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Return Config to Client",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  environment: $json.environment,\n  database: $json.database,\n  apiKeys: $json.apiKeys\n} }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Get Config": {
+      "main": [[{ "node": "Set Database Config", "type": "main", "index": 0 }]]
+    },
+    "Set Database Config": {
+      "main": [[{ "node": "Set API Keys", "type": "main", "index": 0 }]]
+    },
+    "Set API Keys": {
+      "main": [[{ "node": "Build Configuration", "type": "main", "index": 0 }]]
+    },
+    "Build Configuration": {
+      "main": [[{ "node": "Return Config to Client", "type": "main", "index": 0 }]]
+    }
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "id": "vuln-cred-006",
+  "name": "Credential Exposure via Slack Output",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook - Login Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/user-login",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Credentials",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "username",
+              "value": "={{ $json.body.username }}"
+            },
+            {
+              "name": "password",
+              "value": "={{ $json.body.password }}"
+            },
+            {
+              "name": "apiToken",
+              "value": "={{ $json.body.token }}"
+            },
+            {
+              "name": "ipAddress",
+              "value": "={{ $json.headers['x-forwarded-for'] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Format Login Event",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "=New login detected:\nUsername: {{ $json.username }}\nPassword: {{ $json.password }}\nToken: {{ $json.apiToken }}\nIP: {{ $json.ipAddress }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Check Suspicious Login",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $('Extract Credentials').item.json.ipAddress }}",
+              "operation": "notContains",
+              "value2": "192.168"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Alert Security Team",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "channel": "#security-alerts",
+        "text": "={{ $('Format Login Event').item.json.message }}",
+        "otherOptions": {
+          "username": "Security Bot"
+        }
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "1",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Log to Database",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 250],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "normal_login"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 125],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"status\": \"ok\"} }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Login Event": {
+      "main": [[{ "node": "Extract Credentials", "type": "main", "index": 0 }]]
+    },
+    "Extract Credentials": {
+      "main": [[{ "node": "Format Login Event", "type": "main", "index": 0 }]]
+    },
+    "Format Login Event": {
+      "main": [[{ "node": "Check Suspicious Login", "type": "main", "index": 0 }]]
+    },
+    "Check Suspicious Login": {
+      "main": [
+        [{ "node": "Alert Security Team", "type": "main", "index": 0 }],
+        [{ "node": "Log to Database", "type": "main", "index": 0 }]
+      ]
+    },
+    "Alert Security Team": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    },
+    "Log to Database": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

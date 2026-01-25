@@ -1,0 +1,164 @@
+{
+  "id": "safe-ssrf-001",
+  "name": "SAFE - SSRF with Domain Allowlist Validation",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/secure-fetch",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "requestedUrl",
+              "value": "={{ $json.body.url }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Validate Domain",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.requestedUrl }}",
+              "operation": "regex",
+              "value2": "^https?://(api\\.github\\.com|api\\.example\\.com|public-api\\.trusted\\.com)/.*$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Prepare Safe Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, -100],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "safeUrl",
+              "value": "={{ $json.requestedUrl }}"
+            },
+            {
+              "name": "validated",
+              "value": "true"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Fetch Allowed Resource",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1000, -100],
+      "parameters": {
+        "url": "={{ $json.safeUrl }}",
+        "method": "GET",
+        "options": {
+          "timeout": 5000,
+          "redirect": {
+            "followRedirects": false
+          }
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, -100],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Reject Invalid Domain",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 100],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "error",
+              "value": "Domain not in allowlist"
+            },
+            {
+              "name": "requestedUrl",
+              "value": "={{ $('Extract URL').item.json.requestedUrl }}"
+            },
+            {
+              "name": "allowedDomains",
+              "value": "api.github.com, api.example.com, public-api.trusted.com"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-8",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 100],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 403
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Extract URL", "type": "main", "index": 0 }]]
+    },
+    "Extract URL": {
+      "main": [[{ "node": "Validate Domain", "type": "main", "index": 0 }]]
+    },
+    "Validate Domain": {
+      "main": [
+        [{ "node": "Prepare Safe Request", "type": "main", "index": 0 }],
+        [{ "node": "Reject Invalid Domain", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare Safe Request": {
+      "main": [[{ "node": "Fetch Allowed Resource", "type": "main", "index": 0 }]]
+    },
+    "Fetch Allowed Resource": {
+      "main": [[{ "node": "Success Response", "type": "main", "index": 0 }]]
+    },
+    "Reject Invalid Domain": {
+      "main": [[{ "node": "Error Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

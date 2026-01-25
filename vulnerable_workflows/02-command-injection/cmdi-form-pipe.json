@@ -1,0 +1,88 @@
+{
+  "id": "vuln-cmdi-002",
+  "name": "Command Injection - Form with Pipe Operator",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "formTitle": "File Search",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Search Pattern",
+              "fieldType": "text"
+            },
+            {
+              "fieldLabel": "Directory",
+              "fieldType": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Form Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "pattern",
+              "value": "={{ $json['Search Pattern'] }}"
+            },
+            {
+              "name": "directory",
+              "value": "={{ $json['Directory'] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Construct Search Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "searchCmd",
+              "value": "find {{ $json.directory }} -name {{ $json.pattern }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Run Find Command",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "command": "={{ $json.searchCmd }}"
+      }
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [[{ "node": "Extract Form Input", "type": "main", "index": 0 }]]
+    },
+    "Extract Form Input": {
+      "main": [[{ "node": "Construct Search Command", "type": "main", "index": 0 }]]
+    },
+    "Construct Search Command": {
+      "main": [[{ "node": "Run Find Command", "type": "main", "index": 0 }]]
+    }
+  }
+}

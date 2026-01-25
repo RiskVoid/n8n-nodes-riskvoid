@@ -1,0 +1,229 @@
+{
+  "name": "vuln-sanitizer-002",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "database",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-002",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "sanitizer-002"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-001",
+              "name": "operation",
+              "value": "={{ $json.body.operation }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-002",
+              "name": "table",
+              "value": "={{ $json.body.table }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-003",
+              "name": "filter",
+              "value": "={{ $json.body.filter }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-002",
+      "name": "Extract Request Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "id": "rule-001",
+              "conditions": {
+                "string": [
+                  {
+                    "id": "condition-001",
+                    "value1": "={{ $json.operation }}",
+                    "operation": "equals",
+                    "value2": "select"
+                  }
+                ]
+              },
+              "output": 0
+            },
+            {
+              "id": "rule-002",
+              "conditions": {
+                "string": [
+                  {
+                    "id": "condition-002",
+                    "value1": "={{ $json.operation }}",
+                    "operation": "equals",
+                    "value2": "insert"
+                  }
+                ]
+              },
+              "output": 1
+            },
+            {
+              "id": "rule-003",
+              "conditions": {
+                "string": [
+                  {
+                    "id": "condition-003",
+                    "value1": "={{ $json.operation }}",
+                    "operation": "equals",
+                    "value2": "update"
+                  }
+                ]
+              },
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 3
+      },
+      "id": "switch-002",
+      "name": "Route by Operation",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT * FROM {{ $json.table }} WHERE {{ $json.filter }}",
+        "options": {}
+      },
+      "id": "mysql-001",
+      "name": "Query Database",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [1000, 100],
+      "credentials": {
+        "mySql": {
+          "id": "mysql-cred-001",
+          "name": "MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO users (name, email) VALUES ('Safe', 'safe@example.com')",
+        "options": {}
+      },
+      "id": "mysql-002",
+      "name": "Insert Record",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [1000, 250],
+      "credentials": {
+        "mySql": {
+          "id": "mysql-cred-001",
+          "name": "MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE users SET status = 'active' WHERE id = 1",
+        "options": {}
+      },
+      "id": "mysql-003",
+      "name": "Update Record",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [1000, 400],
+      "credentials": {
+        "mySql": {
+          "id": "mysql-cred-001",
+          "name": "MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { error: 'Invalid operation' };"
+      },
+      "id": "code-003",
+      "name": "Return Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 550]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Request Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Request Data": {
+      "main": [
+        [
+          {
+            "node": "Route by Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Operation": {
+      "main": [
+        [
+          {
+            "node": "Query Database",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert Record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

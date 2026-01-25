@@ -1,0 +1,224 @@
+{
+  "name": "HubSpot Webhook SSRF Vulnerability",
+  "nodes": [
+    {
+      "parameters": {
+        "eventsUi": {
+          "eventValues": [
+            {
+              "name": "contact.creation"
+            },
+            {
+              "name": "contact.propertyChange"
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "id": "hubspot-trigger",
+      "name": "HubSpot Trigger",
+      "type": "n8n-nodes-base.hubspotTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "hubspot-webhook-001",
+      "credentials": {
+        "hubspotApi": {
+          "id": "1",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "contactId",
+              "value": "={{ $json.objectId }}"
+            },
+            {
+              "name": "propertyName",
+              "value": "={{ $json.propertyName }}"
+            },
+            {
+              "name": "propertyValue",
+              "value": "={{ $json.propertyValue }}"
+            },
+            {
+              "name": "webhookUrl",
+              "value": "={{ $json.propertyValue }}"
+            },
+            {
+              "name": "eventType",
+              "value": "={{ $json.eventType }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-hubspot-data",
+      "name": "Extract HubSpot Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.webhookUrl }}",
+        "authentication": "none",
+        "requestMethod": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contactId",
+              "value": "={{ $json.contactId }}"
+            },
+            {
+              "name": "event",
+              "value": "={{ $json.eventType }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-notify-webhook",
+      "name": "Notify Webhook URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "webhookResponse",
+              "value": "={{ $json.statusCode }}"
+            },
+            {
+              "name": "responseBody",
+              "value": "={{ JSON.stringify($json.body) }}"
+            },
+            {
+              "name": "notifiedUrl",
+              "value": "={{ $('Extract HubSpot Data').item.json.webhookUrl }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-webhook-response",
+      "name": "Set Webhook Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.webhookResponse }}",
+              "operation": "equal",
+              "value2": 200
+            }
+          ]
+        }
+      },
+      "id": "if-webhook-success",
+      "name": "Check Webhook Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "webhook_delivered"
+            },
+            {
+              "name": "contactId",
+              "value": "={{ $('Extract HubSpot Data').item.json.contactId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-success",
+      "name": "Set Delivery Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1500, 200]
+    }
+  ],
+  "connections": {
+    "HubSpot Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract HubSpot Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract HubSpot Data": {
+      "main": [
+        [
+          {
+            "node": "Notify Webhook URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Webhook URL": {
+      "main": [
+        [
+          {
+            "node": "Set Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Webhook Response": {
+      "main": [
+        [
+          {
+            "node": "Check Webhook Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Webhook Success": {
+      "main": [
+        [
+          {
+            "node": "Set Delivery Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "1"
+}

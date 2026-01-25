@@ -1,0 +1,63 @@
+{
+  "id": "safe-rce-001",
+  "name": "SAFE - Schedule to Code (Trusted Source)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Prepare Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "timestamp",
+              "value": "={{ $now }}"
+            },
+            {
+              "name": "taskId",
+              "value": "scheduled-task-001"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Safe Code Execution",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "jsCode": "// Safe: no user input, only trusted data from schedule trigger\nconst timestamp = '{{ $json.timestamp }}';\nconst taskId = '{{ $json.taskId }}';\n\n// Hardcoded, safe operation\nconst result = {\n  processed: true,\n  timestamp: timestamp,\n  taskId: taskId,\n  message: 'Scheduled task completed successfully'\n};\n\nreturn [{json: result}];"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Prepare Data", "type": "main", "index": 0 }]]
+    },
+    "Prepare Data": {
+      "main": [[{ "node": "Safe Code Execution", "type": "main", "index": 0 }]]
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "id": "vuln-cmdi-004",
+  "name": "Command Injection - Telegram with Command Substitution",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "updates": ["message"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Get Message Text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userInput",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.message.from.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Prepare Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "shellCommand",
+              "value": "echo User input: {{ $json.userInput }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Execute Command",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "command": "={{ $json.shellCommand }}"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Send Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Get Message Text').item.json.userId }}",
+        "text": "Command executed"
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{ "node": "Get Message Text", "type": "main", "index": 0 }]]
+    },
+    "Get Message Text": {
+      "main": [[{ "node": "Prepare Command", "type": "main", "index": 0 }]]
+    },
+    "Prepare Command": {
+      "main": [[{ "node": "Execute Command", "type": "main", "index": 0 }]]
+    },
+    "Execute Command": {
+      "main": [[{ "node": "Send Reply", "type": "main", "index": 0 }]]
+    }
+  }
+}

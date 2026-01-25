@@ -1,0 +1,82 @@
+{
+  "id": "vuln-rce-007",
+  "name": "RCE - RSS Feed to Code with os.system",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "RSS Feed Reader",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "url": "https://example.com/rss/feed.xml"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Feed Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "title",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "link",
+              "value": "={{ $json.link }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Parse Commands",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "commandString",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Execute with os.system",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "python",
+        "pythonCode": "# Vulnerable: Python os.system with RSS feed content\nimport os\nfeed_content = '{{ $json.commandString }}'\nos.system(feed_content)\nreturn [{'json': {'executed': True, 'source': 'rss'}}]"
+      }
+    }
+  ],
+  "connections": {
+    "RSS Feed Reader": {
+      "main": [[{ "node": "Extract Feed Content", "type": "main", "index": 0 }]]
+    },
+    "Extract Feed Content": {
+      "main": [[{ "node": "Parse Commands", "type": "main", "index": 0 }]]
+    },
+    "Parse Commands": {
+      "main": [[{ "node": "Execute with os.system", "type": "main", "index": 0 }]]
+    }
+  }
+}

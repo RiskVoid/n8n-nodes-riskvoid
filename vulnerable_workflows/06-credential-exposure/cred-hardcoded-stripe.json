@@ -1,0 +1,143 @@
+{
+  "id": "vuln-cred-004",
+  "name": "Hardcoded Stripe Secret Key in Set Node",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook - Payment Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/stripe-webhook",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Set Stripe Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "stripeSecretKey",
+              "value": "FAKE_sk_live_1234567890abcdefghijklmnopqrstuvwxyz"
+            },
+            {
+              "name": "stripeApiVersion",
+              "value": "2023-10-16"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Extract Customer ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "customerId",
+              "value": "={{ $('Webhook - Payment Event').item.json.body.customer }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $('Webhook - Payment Event').item.json.body.amount }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Get Customer Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "url": "=https://api.stripe.com/v1/customers/{{ $json.customerId }}",
+        "method": "GET",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Set Stripe Config').item.json.stripeSecretKey }}"
+            },
+            {
+              "name": "Stripe-Version",
+              "value": "={{ $('Set Stripe Config').item.json.stripeApiVersion }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Create Refund",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "url": "https://api.stripe.com/v1/refunds",
+        "method": "POST",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer FAKE_sk_live_1234567890abcdefghijklmnopqrstuvwxyz"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "charge",
+              "value": "={{ $('Extract Customer ID').item.json.customerId }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"status\": \"refunded\"} }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Payment Event": {
+      "main": [[{ "node": "Set Stripe Config", "type": "main", "index": 0 }]]
+    },
+    "Set Stripe Config": {
+      "main": [[{ "node": "Extract Customer ID", "type": "main", "index": 0 }]]
+    },
+    "Extract Customer ID": {
+      "main": [[{ "node": "Get Customer Details", "type": "main", "index": 0 }]]
+    },
+    "Get Customer Details": {
+      "main": [[{ "node": "Create Refund", "type": "main", "index": 0 }]]
+    },
+    "Create Refund": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

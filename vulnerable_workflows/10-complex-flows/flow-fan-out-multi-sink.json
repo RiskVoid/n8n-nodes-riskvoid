@@ -1,0 +1,191 @@
+{
+  "name": "Fan-Out Multi-Sink Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/process",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-source",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 400],
+      "webhookId": "webhook-fanout"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userCommand",
+              "value": "={{ $json.body.command }}"
+            },
+            {
+              "name": "sqlQuery",
+              "value": "={{ $json.body.query }}"
+            },
+            {
+              "name": "targetUrl",
+              "value": "={{ $json.body.url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-extract-data",
+      "name": "Extract User Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const cmd = $input.first().json.userCommand;\nconst output = eval(cmd);\nreturn [{ json: { output } }];"
+      },
+      "id": "code-sink-1",
+      "name": "Execute Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.sqlQuery }}",
+        "options": {}
+      },
+      "id": "mysql-sink-2",
+      "name": "Execute SQL Query",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2,
+      "position": [750, 400],
+      "credentials": {
+        "mySql": {
+          "id": "mysql-cred-1",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.targetUrl }}",
+        "options": {}
+      },
+      "id": "http-sink-3",
+      "name": "Fetch URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 600]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "mergeByFields": {
+          "values": []
+        },
+        "options": {}
+      },
+      "id": "merge-results",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [1000, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 400]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract User Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract User Input": {
+      "main": [
+        [
+          {
+            "node": "Execute Code",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute SQL Query",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Code": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute SQL Query": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fetch URL": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "tags": []
+}

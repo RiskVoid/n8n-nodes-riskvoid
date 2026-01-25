@@ -1,0 +1,149 @@
+{
+  "id": "safe-sqli-001",
+  "name": "SAFE - Webhook to MySQL with parameterized query",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "User Lookup API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/user/lookup",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract User ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userId",
+              "value": "={{ $json.body.userId }}"
+            },
+            {
+              "name": "accountType",
+              "value": "={{ $json.body.accountType || 'standard' }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.userId }}",
+              "operation": "regex",
+              "value2": "^[0-9]+$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Query User (Parameterized)",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "operation": "select",
+        "table": "users",
+        "where": {
+          "conditions": [
+            {
+              "column": "id",
+              "condition": "equal",
+              "value": "={{ $json.userId }}"
+            },
+            {
+              "column": "account_type",
+              "condition": "equal",
+              "value": "={{ $json.accountType }}"
+            }
+          ]
+        },
+        "columns": "id,username,email,created_at"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "user",
+              "value": "={{ $json }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Return User Data",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Invalid Input Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [750, 200],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\": \"Invalid user ID format\"}",
+        "responseCode": 400
+      }
+    }
+  ],
+  "connections": {
+    "User Lookup API": {
+      "main": [[{ "node": "Extract User ID", "type": "main", "index": 0 }]]
+    },
+    "Extract User ID": {
+      "main": [[{ "node": "Validate Input", "type": "main", "index": 0 }]]
+    },
+    "Validate Input": {
+      "main": [
+        [{ "node": "Query User (Parameterized)", "type": "main", "index": 0 }],
+        [{ "node": "Invalid Input Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Query User (Parameterized)": {
+      "main": [[{ "node": "Format Response", "type": "main", "index": 0 }]]
+    },
+    "Format Response": {
+      "main": [[{ "node": "Return User Data", "type": "main", "index": 0 }]]
+    }
+  }
+}

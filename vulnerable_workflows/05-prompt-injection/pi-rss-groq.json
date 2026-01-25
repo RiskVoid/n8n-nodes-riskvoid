@@ -1,0 +1,119 @@
+{
+  "id": "vuln-pi-007",
+  "name": "PI - RSS Feed to Groq",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "RSS Feed Trigger",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "url": "https://news.ycombinator.com/rss"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Article",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "title",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.description }}"
+            },
+            {
+              "name": "link",
+              "value": "={{ $json.link }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Prepare Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "articleContent",
+              "value": "Title: {{ $json.title }}\nDescription: {{ $json.description }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Groq Analysis",
+      "type": "@n8n/n8n-nodes-langchain.groq",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "model": "llama3-70b-8192",
+        "prompt": "Summarize this article and extract key points: {{ $json.articleContent }}"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "summary",
+              "value": "={{ $json.response }}"
+            },
+            {
+              "name": "originalTitle",
+              "value": "={{ $('Extract Article').item.json.title }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Store Summary",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO article_summaries (title, summary) VALUES ('{{ $json.originalTitle }}', '{{ $json.summary }}')"
+      }
+    }
+  ],
+  "connections": {
+    "RSS Feed Trigger": {
+      "main": [[{ "node": "Extract Article", "type": "main", "index": 0 }]]
+    },
+    "Extract Article": {
+      "main": [[{ "node": "Prepare Content", "type": "main", "index": 0 }]]
+    },
+    "Prepare Content": {
+      "main": [[{ "node": "Groq Analysis", "type": "main", "index": 0 }]]
+    },
+    "Groq Analysis": {
+      "main": [[{ "node": "Format Output", "type": "main", "index": 0 }]]
+    },
+    "Format Output": {
+      "main": [[{ "node": "Store Summary", "type": "main", "index": 0 }]]
+    }
+  }
+}

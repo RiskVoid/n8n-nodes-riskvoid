@@ -1,0 +1,67 @@
+{
+  "id": "safe-edge-001",
+  "name": "Edge Case - Static Values Only (Safe)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/static",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userData",
+              "value": "={{ $json.body.data }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Safe Static Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "jsCode": "// Safe: no user input, only hardcoded values\nconst staticValue = 'hardcoded string';\nconst staticNumber = 42;\nconst staticArray = ['a', 'b', 'c'];\n\nconst result = {\n  message: 'This is completely static',\n  value: staticNumber,\n  items: staticArray,\n  computed: staticNumber * 2\n};\n\nreturn [{json: result}];"
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Extract Input", "type": "main", "index": 0 }]]
+    },
+    "Extract Input": {
+      "main": [[{ "node": "Safe Static Code", "type": "main", "index": 0 }]]
+    },
+    "Safe Static Code": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

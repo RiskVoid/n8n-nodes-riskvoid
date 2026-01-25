@@ -1,0 +1,224 @@
+{
+  "name": "Dual-Role HTTP Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fetch-and-execute",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-source",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "webhook-dual"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "targetApiUrl",
+              "value": "={{ $json.body.apiUrl }}"
+            },
+            {
+              "name": "apiEndpoint",
+              "value": "={{ $json.body.endpoint }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-extract-url",
+      "name": "Extract API Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fullUrl",
+              "value": "={{ $json.targetApiUrl + '/' + $json.apiEndpoint }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-build-url",
+      "name": "Build Full URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.fullUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "http-sink-and-source",
+      "name": "Fetch External API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "apiResponseCode",
+              "value": "={{ $json.code }}"
+            },
+            {
+              "name": "apiResponseData",
+              "value": "={{ $json.data }}"
+            },
+            {
+              "name": "executionScript",
+              "value": "={{ $json.script }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-extract-response",
+      "name": "Extract API Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "dynamicCode",
+              "value": "={{ $json.apiResponseCode + '; ' + $json.executionScript }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-prepare-code",
+      "name": "Prepare Dynamic Code",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const code = $input.first().json.dynamicCode;\nconst result = eval(code);\nreturn [{ json: { result, executedCode: code } }];"
+      },
+      "id": "code-sink",
+      "name": "Execute API Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1750, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract API Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract API Config": {
+      "main": [
+        [
+          {
+            "node": "Build Full URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Full URL": {
+      "main": [
+        [
+          {
+            "node": "Fetch External API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch External API": {
+      "main": [
+        [
+          {
+            "node": "Extract API Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract API Response": {
+      "main": [
+        [
+          {
+            "node": "Prepare Dynamic Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Dynamic Code": {
+      "main": [
+        [
+          {
+            "node": "Execute API Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute API Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "tags": []
+}

@@ -1,0 +1,140 @@
+{
+  "name": "vuln-sanitizer-003",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "commands",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-003",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "sanitizer-003"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-001",
+              "name": "commands",
+              "value": "={{ $json.body.commands }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-003",
+      "name": "Extract Commands",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "commands",
+        "options": {}
+      },
+      "id": "split-003",
+      "name": "Split Commands",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "id": "condition-001",
+              "value1": "={{ $json.commands }}",
+              "operation": "notContains",
+              "value2": "rm"
+            },
+            {
+              "id": "condition-002",
+              "value1": "={{ $json.commands }}",
+              "operation": "notContains",
+              "value2": "shutdown"
+            },
+            {
+              "id": "condition-003",
+              "value1": "={{ $json.commands }}",
+              "operation": "notContains",
+              "value2": "delete"
+            }
+          ]
+        },
+        "combineOperation": "all"
+      },
+      "id": "filter-003",
+      "name": "Filter Dangerous Commands",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ $json.commands }}",
+        "options": {}
+      },
+      "id": "exec-003",
+      "name": "Execute Command",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Commands",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Commands": {
+      "main": [
+        [
+          {
+            "node": "Split Commands",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Commands": {
+      "main": [
+        [
+          {
+            "node": "Filter Dangerous Commands",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Dangerous Commands": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

@@ -1,0 +1,136 @@
+{
+  "id": "vuln-sqli-006",
+  "name": "NoSQLi - Discord to MongoDB with injection",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Discord Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/discord/commands",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Parse Discord Event",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "command",
+              "value": "={{ $json.body.data.name }}"
+            },
+            {
+              "name": "username",
+              "value": "={{ $json.body.data.options[0].value }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.body.member.user.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Build Query Filter",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "queryFilter",
+              "value": "{\"username\": \"{{ $json.username }}\", \"guild_id\": \"{{ $json.body.guild_id }}\"}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Parse JSON Query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "jsCode": "// Vulnerable: parsing user-controlled JSON for MongoDB query\nconst filterString = '{{ $json.queryFilter }}';\nconst filter = JSON.parse(filterString);\nreturn [{json: {filter}}];"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Query MongoDB",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "operation": "find",
+        "collection": "discord_users",
+        "query": "={{ JSON.stringify($json.filter) }}"
+      },
+      "credentials": {
+        "mongoDb": {
+          "id": "6",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Format User Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userData",
+              "value": "={{ JSON.stringify($json) }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1500, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "Discord Webhook": {
+      "main": [[{ "node": "Parse Discord Event", "type": "main", "index": 0 }]]
+    },
+    "Parse Discord Event": {
+      "main": [[{ "node": "Build Query Filter", "type": "main", "index": 0 }]]
+    },
+    "Build Query Filter": {
+      "main": [[{ "node": "Parse JSON Query", "type": "main", "index": 0 }]]
+    },
+    "Parse JSON Query": {
+      "main": [[{ "node": "Query MongoDB", "type": "main", "index": 0 }]]
+    },
+    "Query MongoDB": {
+      "main": [[{ "node": "Format User Data", "type": "main", "index": 0 }]]
+    },
+    "Format User Data": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

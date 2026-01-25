@@ -1,0 +1,98 @@
+{
+  "id": "vuln-rce-005",
+  "name": "RCE - Telegram to Code with subprocess",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "updates": ["message"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Telegram Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "messageText",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.message.from.id }}"
+            },
+            {
+              "name": "chatId",
+              "value": "={{ $json.message.chat.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Parse Bot Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "commandToExecute",
+              "value": "={{ $json.messageText }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Run Python Subprocess",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "python",
+        "pythonCode": "# Vulnerable: Python subprocess with user input\nimport subprocess\nuser_command = '{{ $json.commandToExecute }}'\nresult = subprocess.run(user_command, shell=True, capture_output=True)\nreturn [{'json': {'output': result.stdout.decode(), 'userId': '{{ $json.userId }}'}}]"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Reply to User",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Extract Telegram Message').item.json.chatId }}",
+        "text": "Command processed: {{ $json.output }}"
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{ "node": "Extract Telegram Message", "type": "main", "index": 0 }]]
+    },
+    "Extract Telegram Message": {
+      "main": [[{ "node": "Parse Bot Command", "type": "main", "index": 0 }]]
+    },
+    "Parse Bot Command": {
+      "main": [[{ "node": "Run Python Subprocess", "type": "main", "index": 0 }]]
+    },
+    "Run Python Subprocess": {
+      "main": [[{ "node": "Reply to User", "type": "main", "index": 0 }]]
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "id": "vuln-cmdi-005",
+  "name": "Command Injection - Discord with Backtick Substitution",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Discord Trigger",
+      "type": "n8n-nodes-base.discordTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "events": ["messageCreate"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Discord Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "messageContent",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "authorId",
+              "value": "={{ $json.author }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Build Shell Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "cmd",
+              "value": "echo 'Processing: {{ $json.messageContent }}'"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Run Shell Command",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "command": "={{ $json.cmd }}"
+      }
+    }
+  ],
+  "connections": {
+    "Discord Trigger": {
+      "main": [[{ "node": "Extract Discord Content", "type": "main", "index": 0 }]]
+    },
+    "Extract Discord Content": {
+      "main": [[{ "node": "Build Shell Command", "type": "main", "index": 0 }]]
+    },
+    "Build Shell Command": {
+      "main": [[{ "node": "Run Shell Command", "type": "main", "index": 0 }]]
+    }
+  }
+}

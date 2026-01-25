@@ -1,0 +1,167 @@
+{
+  "name": "Gmail Command Injection Vulnerability",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "includeSpamTrash": false
+        },
+        "options": {}
+      },
+      "id": "gmail-trigger",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [250, 300],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "1",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "emailSubject",
+              "value": "={{ $json.payload.headers.find(h => h.name === 'Subject').value }}"
+            },
+            {
+              "name": "emailFrom",
+              "value": "={{ $json.payload.headers.find(h => h.name === 'From').value }}"
+            },
+            {
+              "name": "emailBody",
+              "value": "={{ $json.snippet }}"
+            },
+            {
+              "name": "attachmentName",
+              "value": "={{ $json.payload.filename || 'email' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-email-data",
+      "name": "Extract Email Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "command": "=echo \"Processing email: {{ $json.emailSubject }}\" > /tmp/emails.log && cat /tmp/emails.log"
+      },
+      "id": "execute-command",
+      "name": "Log Email Processing",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "commandOutput",
+              "value": "={{ $json.stdout }}"
+            },
+            {
+              "name": "emailProcessed",
+              "value": "={{ $('Extract Email Data').item.json.emailSubject }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-result",
+      "name": "Set Command Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.commandOutput }}",
+              "operation": "contains",
+              "value2": "Processing email"
+            }
+          ]
+        }
+      },
+      "id": "if-success",
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Data": {
+      "main": [
+        [
+          {
+            "node": "Log Email Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Email Processing": {
+      "main": [
+        [
+          {
+            "node": "Set Command Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Command Result": {
+      "main": [
+        [
+          {
+            "node": "Check Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "1"
+}

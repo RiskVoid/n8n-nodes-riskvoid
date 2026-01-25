@@ -1,0 +1,136 @@
+{
+  "id": "vuln-sqli-003",
+  "name": "SQLi - Email to MySQL with raw UPDATE",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Email Watcher",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "mailbox": "INBOX",
+        "options": {
+          "simple": true
+        }
+      },
+      "credentials": {
+        "imap": {
+          "id": "3",
+          "name": "Email account"
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Parse Email Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "subject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "fromEmail",
+              "value": "={{ $json.from.address }}"
+            },
+            {
+              "name": "bodyText",
+              "value": "={{ $json.text }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Extract Update Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "statusUpdate",
+              "value": "={{ $json.subject.replace('Status Update: ', '') }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Build Update Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "updateQuery",
+              "value": "UPDATE tickets SET status = '{{ $json.statusUpdate }}', updated_by = '{{ $json.fromEmail }}' WHERE email = '{{ $json.fromEmail }}'"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Update Database",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.updateQuery }}"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Log Update",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "log",
+              "value": "Updated ticket status for {{ $json.fromEmail }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Email Watcher": {
+      "main": [[{ "node": "Parse Email Content", "type": "main", "index": 0 }]]
+    },
+    "Parse Email Content": {
+      "main": [[{ "node": "Extract Update Command", "type": "main", "index": 0 }]]
+    },
+    "Extract Update Command": {
+      "main": [[{ "node": "Build Update Query", "type": "main", "index": 0 }]]
+    },
+    "Build Update Query": {
+      "main": [[{ "node": "Update Database", "type": "main", "index": 0 }]]
+    },
+    "Update Database": {
+      "main": [[{ "node": "Log Update", "type": "main", "index": 0 }]]
+    }
+  }
+}

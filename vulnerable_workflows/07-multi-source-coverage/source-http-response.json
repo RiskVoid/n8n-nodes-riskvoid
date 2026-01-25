@@ -1,0 +1,229 @@
+{
+  "name": "HTTP Response Data RCE Vulnerability",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/5 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.example.com/v1/tasks",
+        "authentication": "none",
+        "requestMethod": "GET",
+        "options": {}
+      },
+      "id": "http-fetch-tasks",
+      "name": "Fetch External Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "taskName",
+              "value": "={{ $json.name }}"
+            },
+            {
+              "name": "taskDescription",
+              "value": "={{ $json.description }}"
+            },
+            {
+              "name": "taskScript",
+              "value": "={{ $json.script }}"
+            },
+            {
+              "name": "taskPriority",
+              "value": "={{ $json.priority }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-task-data",
+      "name": "Extract Task Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Execute task script from external API\nconst task = $input.first().json;\nconst script = task.taskScript;\n\n// VULNERABILITY: eval() with external API response\nconst result = eval(script);\n\nreturn [{ \n  json: { \n    taskId: task.taskId,\n    taskName: task.taskName,\n    executionResult: result,\n    executedAt: new Date().toISOString()\n  } \n}];"
+      },
+      "id": "code-execute-task",
+      "name": "Execute Task Script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.taskId }}"
+            },
+            {
+              "name": "taskName",
+              "value": "={{ $json.taskName }}"
+            },
+            {
+              "name": "result",
+              "value": "={{ JSON.stringify($json.executionResult) }}"
+            },
+            {
+              "name": "executedAt",
+              "value": "={{ $json.executedAt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-execution-result",
+      "name": "Set Execution Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.result }}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      },
+      "id": "if-has-result",
+      "name": "Check Has Result",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.example.com/v1/tasks/{{ $('Set Execution Result').item.json.taskId }}/complete",
+        "authentication": "none",
+        "requestMethod": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "result",
+              "value": "={{ $('Set Execution Result').item.json.result }}"
+            },
+            {
+              "name": "executedAt",
+              "value": "={{ $('Set Execution Result').item.json.executedAt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-report-completion",
+      "name": "Report Task Completion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1750, 200]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch External Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch External Tasks": {
+      "main": [
+        [
+          {
+            "node": "Extract Task Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Task Data": {
+      "main": [
+        [
+          {
+            "node": "Execute Task Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Task Script": {
+      "main": [
+        [
+          {
+            "node": "Set Execution Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Execution Result": {
+      "main": [
+        [
+          {
+            "node": "Check Has Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Has Result": {
+      "main": [
+        [
+          {
+            "node": "Report Task Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "1"
+}

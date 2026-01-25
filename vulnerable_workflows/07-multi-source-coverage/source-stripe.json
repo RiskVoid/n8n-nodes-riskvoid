@@ -1,0 +1,205 @@
+{
+  "name": "Stripe Webhook RCE Vulnerability",
+  "nodes": [
+    {
+      "parameters": {
+        "events": [
+          "customer.created",
+          "customer.updated",
+          "payment_intent.succeeded"
+        ]
+      },
+      "id": "stripe-trigger",
+      "name": "Stripe Trigger",
+      "type": "n8n-nodes-base.stripeTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "stripe-webhook-001",
+      "credentials": {
+        "stripeApi": {
+          "id": "1",
+          "name": "Stripe account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "eventType",
+              "value": "={{ $json.type }}"
+            },
+            {
+              "name": "customerId",
+              "value": "={{ $json.data.object.customer || $json.data.object.id }}"
+            },
+            {
+              "name": "customerEmail",
+              "value": "={{ $json.data.object.email }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ JSON.stringify($json.data.object.metadata) }}"
+            },
+            {
+              "name": "processorScript",
+              "value": "={{ $json.data.object.metadata.processor || 'default' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-stripe-data",
+      "name": "Extract Stripe Event",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process Stripe webhook with custom processor\nconst event = $input.first().json;\nconst processor = event.processorScript;\n\n// VULNERABILITY: exec() with Stripe metadata\nconst { execSync } = require('child_process');\nconst result = execSync(processor).toString();\n\nreturn [{ \n  json: { \n    processed: result,\n    customerId: event.customerId,\n    eventType: event.eventType\n  } \n}];"
+      },
+      "id": "code-process-stripe",
+      "name": "Process Stripe Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "processResult",
+              "value": "={{ $json.processed }}"
+            },
+            {
+              "name": "customerId",
+              "value": "={{ $json.customerId }}"
+            },
+            {
+              "name": "eventType",
+              "value": "={{ $json.eventType }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-process-result",
+      "name": "Set Process Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.processResult }}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      },
+      "id": "if-processed",
+      "name": "Check Processed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "event_processed"
+            },
+            {
+              "name": "customerId",
+              "value": "={{ $json.customerId }}"
+            },
+            {
+              "name": "result",
+              "value": "={{ $json.processResult }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-success",
+      "name": "Set Processing Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1500, 200]
+    }
+  ],
+  "connections": {
+    "Stripe Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Stripe Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Stripe Event": {
+      "main": [
+        [
+          {
+            "node": "Process Stripe Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Stripe Event": {
+      "main": [
+        [
+          {
+            "node": "Set Process Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Process Result": {
+      "main": [
+        [
+          {
+            "node": "Check Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Processed": {
+      "main": [
+        [
+          {
+            "node": "Set Processing Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "1"
+}

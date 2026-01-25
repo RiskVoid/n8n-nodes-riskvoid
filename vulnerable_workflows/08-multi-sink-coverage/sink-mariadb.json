@@ -1,0 +1,139 @@
+{
+  "name": "MariaDB SQL Injection - vuln-sink-004",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "search-users",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-mariadb-001",
+      "name": "Webhook - User Search",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "mariadb-inject-001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "search-001",
+              "name": "searchTerm",
+              "value": "={{ $json.query.username }}",
+              "type": "string"
+            },
+            {
+              "id": "dept-001",
+              "name": "department",
+              "value": "={{ $json.query.department || 'all' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-search-params-001",
+      "name": "Set Search Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT u.id, u.username, u.email, u.department, u.created_at\nFROM users u\nWHERE u.username LIKE '%{{ $json.searchTerm }}%'\n  AND (u.department = '{{ $json.department }}' OR '{{ $json.department }}' = 'all')\nORDER BY u.created_at DESC\nLIMIT 50",
+        "options": {}
+      },
+      "id": "mariadb-query-001",
+      "name": "Query User Database",
+      "type": "n8n-nodes-base.mariaDb",
+      "typeVersion": 2.2,
+      "position": [750, 300],
+      "credentials": {
+        "mariaDb": {
+          "id": "1",
+          "name": "MariaDB Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "results-001",
+              "name": "users",
+              "value": "={{ $json }}",
+              "type": "array"
+            },
+            {
+              "id": "count-001",
+              "name": "resultCount",
+              "value": "={{ $input.all().length }}",
+              "type": "number"
+            },
+            {
+              "id": "query-001",
+              "name": "searchedFor",
+              "value": "={{ $('Set Search Parameters').item.json.searchTerm }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-results-001",
+      "name": "Format Search Results",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - User Search": {
+      "main": [
+        [
+          {
+            "node": "Set Search Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Search Parameters": {
+      "main": [
+        [
+          {
+            "node": "Query User Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query User Database": {
+      "main": [
+        [
+          {
+            "node": "Format Search Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "mariadb-vuln-001"
+}

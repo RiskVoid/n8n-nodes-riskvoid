@@ -1,0 +1,117 @@
+{
+  "id": "vuln-pi-004",
+  "name": "PI - Telegram to Azure OpenAI",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "updates": ["message"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "username",
+              "value": "={{ $json.message.from.username }}"
+            },
+            {
+              "name": "chatId",
+              "value": "={{ $json.message.chat.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Build Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "aiPrompt",
+              "value": "Help @{{ $json.username }} with their request: {{ $json.message }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Azure OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.azureOpenAi",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "model": "gpt-4",
+        "prompt": "={{ $json.aiPrompt }}"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "reply",
+              "value": "={{ $json.response }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Extract Message').item.json.chatId }}",
+        "text": "={{ $json.reply }}"
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{ "node": "Extract Message", "type": "main", "index": 0 }]]
+    },
+    "Extract Message": {
+      "main": [[{ "node": "Build Context", "type": "main", "index": 0 }]]
+    },
+    "Build Context": {
+      "main": [[{ "node": "Azure OpenAI", "type": "main", "index": 0 }]]
+    },
+    "Azure OpenAI": {
+      "main": [[{ "node": "Format Response", "type": "main", "index": 0 }]]
+    },
+    "Format Response": {
+      "main": [[{ "node": "Send to Telegram", "type": "main", "index": 0 }]]
+    }
+  }
+}

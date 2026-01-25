@@ -1,0 +1,132 @@
+{
+  "id": "vuln-ssrf-003",
+  "name": "SSRF - EmailReadImap to HTTP Request (172.16.x.x)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Email Trigger",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "mailbox": "INBOX",
+        "options": {
+          "forceReconnect": 60
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Parse Email Body",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "emailSubject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "emailBody",
+              "value": "={{ $json.body }}"
+            },
+            {
+              "name": "targetUrl",
+              "value": "={{ $json.body.match(/https?:\\/\\/[^\\s]+/)[0] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Validate URL Format",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "apiUrl",
+              "value": "={{ $json.targetUrl }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Process Attachment URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "downloadUrl",
+              "value": "={{ $json.apiUrl }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Download Resource",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "url": "={{ $json.downloadUrl }}",
+        "method": "GET",
+        "options": {
+          "timeout": 10000,
+          "followRedirect": true
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Store Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "downloadStatus",
+              "value": "completed"
+            },
+            {
+              "name": "data",
+              "value": "={{ JSON.stringify($json) }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Email Trigger": {
+      "main": [[{ "node": "Parse Email Body", "type": "main", "index": 0 }]]
+    },
+    "Parse Email Body": {
+      "main": [[{ "node": "Validate URL Format", "type": "main", "index": 0 }]]
+    },
+    "Validate URL Format": {
+      "main": [[{ "node": "Process Attachment URL", "type": "main", "index": 0 }]]
+    },
+    "Process Attachment URL": {
+      "main": [[{ "node": "Download Resource", "type": "main", "index": 0 }]]
+    },
+    "Download Resource": {
+      "main": [[{ "node": "Store Result", "type": "main", "index": 0 }]]
+    }
+  }
+}

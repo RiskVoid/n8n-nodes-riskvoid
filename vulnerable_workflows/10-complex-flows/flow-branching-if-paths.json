@@ -1,0 +1,250 @@
+{
+  "name": "Branching IF Paths Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "conditional",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-source",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "webhook-branch"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userInput",
+              "value": "={{ $json.body.command }}"
+            },
+            {
+              "name": "executeMode",
+              "value": "={{ $json.body.mode }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-extract",
+      "name": "Extract Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.executeMode }}",
+              "operation": "equals",
+              "value2": "execute"
+            }
+          ]
+        }
+      },
+      "id": "if-node",
+      "name": "Check Execute Mode",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "codeToExecute",
+              "value": "={{ $json.userInput }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-true-path",
+      "name": "Prepare Execution",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 150]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const code = $input.first().json.codeToExecute;\nconst result = eval(code);\nreturn [{ json: { result, executed: true } }];"
+      },
+      "id": "code-sink-true",
+      "name": "Execute Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 150]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "logMessage",
+              "value": "={{ $json.userInput }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-false-path",
+      "name": "Prepare Logging",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 450]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "logs",
+        "text": "={{ $json.logMessage }}",
+        "otherOptions": {}
+      },
+      "id": "slack-safe",
+      "name": "Log to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [1250, 450],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-cred-1",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "mergeByFields": {
+          "values": []
+        },
+        "options": {}
+      },
+      "id": "merge-paths",
+      "name": "Merge Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1750, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Check Execute Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Execute Mode": {
+      "main": [
+        [
+          {
+            "node": "Prepare Execution",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Logging",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Execution": {
+      "main": [
+        [
+          {
+            "node": "Execute Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Code": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Logging": {
+      "main": [
+        [
+          {
+            "node": "Log to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Slack": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Paths": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "tags": []
+}

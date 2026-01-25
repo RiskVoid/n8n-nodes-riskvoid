@@ -1,0 +1,136 @@
+{
+  "name": "SSH Command Injection - vuln-sink-001",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "execute-ssh",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-ssh-001",
+      "name": "Webhook - SSH Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "ssh-command-inject-001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "command-001",
+              "name": "sshCommand",
+              "value": "={{ $json.body.command }}",
+              "type": "string"
+            },
+            {
+              "id": "server-001",
+              "name": "targetServer",
+              "value": "={{ $json.body.server || 'prod-server-01' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-ssh-params-001",
+      "name": "Set SSH Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "password",
+        "host": "={{ $json.targetServer }}",
+        "username": "admin",
+        "password": "={{ $credentials.sshPassword }}",
+        "command": "={{ $json.sshCommand }}",
+        "cwd": "/var/log"
+      },
+      "id": "ssh-execute-001",
+      "name": "Execute SSH Command",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [750, 300],
+      "credentials": {
+        "sshPassword": {
+          "id": "1",
+          "name": "SSH Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "result-001",
+              "name": "commandResult",
+              "value": "={{ $json.stdout }}",
+              "type": "string"
+            },
+            {
+              "id": "status-001",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-response-001",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - SSH Request": {
+      "main": [
+        [
+          {
+            "node": "Set SSH Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set SSH Parameters": {
+      "main": [
+        [
+          {
+            "node": "Execute SSH Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute SSH Command": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "ssh-vuln-001"
+}

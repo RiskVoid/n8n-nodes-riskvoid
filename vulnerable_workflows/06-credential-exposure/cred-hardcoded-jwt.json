@@ -1,0 +1,139 @@
+{
+  "id": "vuln-cred-005",
+  "name": "Hardcoded JWT Token in HTTP Request",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Schedule - Hourly Sync",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Set Auth Token",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "jwtToken",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+            },
+            {
+              "name": "apiUrl",
+              "value": "https://api.example.com/v1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Fetch User Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "url": "={{ $json.apiUrl }}/users",
+        "method": "GET",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.jwtToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Process Users",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userId",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.name }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Update User Profile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "url": "={{ $('Set Auth Token').item.json.apiUrl }}/users/{{ $json.userId }}",
+        "method": "PATCH",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "last_sync",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule - Hourly Sync": {
+      "main": [[{ "node": "Set Auth Token", "type": "main", "index": 0 }]]
+    },
+    "Set Auth Token": {
+      "main": [[{ "node": "Fetch User Data", "type": "main", "index": 0 }]]
+    },
+    "Fetch User Data": {
+      "main": [[{ "node": "Process Users", "type": "main", "index": 0 }]]
+    },
+    "Process Users": {
+      "main": [[{ "node": "Update User Profile", "type": "main", "index": 0 }]]
+    }
+  }
+}

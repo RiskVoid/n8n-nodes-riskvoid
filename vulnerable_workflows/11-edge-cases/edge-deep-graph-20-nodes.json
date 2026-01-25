@@ -1,0 +1,317 @@
+{
+  "id": "vuln-edge-001",
+  "name": "Edge Case - Deep Graph with 20 Nodes",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/deep",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Set 1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [150, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data1", "value": "={{ $json.body.input }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Set 2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [300, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data2", "value": "={{ $json.data1 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Set 3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data3", "value": "={{ $json.data2 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Set 4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [600, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data4", "value": "={{ $json.data3 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Set 5",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data5", "value": "={{ $json.data4 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Set 6",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [900, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data6", "value": "={{ $json.data5 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-8",
+      "name": "Set 7",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1050, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data7", "value": "={{ $json.data6 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-9",
+      "name": "Set 8",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1200, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data8", "value": "={{ $json.data7 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-10",
+      "name": "Set 9",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1350, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data9", "value": "={{ $json.data8 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-11",
+      "name": "Set 10",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1500, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data10", "value": "={{ $json.data9 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-12",
+      "name": "Set 11",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1650, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data11", "value": "={{ $json.data10 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-13",
+      "name": "Set 12",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1800, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data12", "value": "={{ $json.data11 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-14",
+      "name": "Set 13",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1950, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data13", "value": "={{ $json.data12 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-15",
+      "name": "Set 14",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [2100, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data14", "value": "={{ $json.data13 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-16",
+      "name": "Set 15",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [2250, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data15", "value": "={{ $json.data14 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-17",
+      "name": "Set 16",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [2400, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data16", "value": "={{ $json.data15 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-18",
+      "name": "Set 17",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [2550, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data17", "value": "={{ $json.data16 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-19",
+      "name": "Set 18",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [2700, 0],
+      "parameters": {
+        "values": {
+          "string": [{"name": "data18", "value": "={{ $json.data17 }}"}]
+        }
+      }
+    },
+    {
+      "id": "node-20",
+      "name": "Vulnerable Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2850, 0],
+      "parameters": {
+        "jsCode": "// After 18 transformation nodes, still vulnerable\nconst userInput = '{{ $json.data18 }}';\nconst result = eval(userInput);\nreturn [{json: {result}}];"
+      }
+    },
+    {
+      "id": "node-21",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [3000, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Set 1", "type": "main", "index": 0 }]]
+    },
+    "Set 1": {
+      "main": [[{ "node": "Set 2", "type": "main", "index": 0 }]]
+    },
+    "Set 2": {
+      "main": [[{ "node": "Set 3", "type": "main", "index": 0 }]]
+    },
+    "Set 3": {
+      "main": [[{ "node": "Set 4", "type": "main", "index": 0 }]]
+    },
+    "Set 4": {
+      "main": [[{ "node": "Set 5", "type": "main", "index": 0 }]]
+    },
+    "Set 5": {
+      "main": [[{ "node": "Set 6", "type": "main", "index": 0 }]]
+    },
+    "Set 6": {
+      "main": [[{ "node": "Set 7", "type": "main", "index": 0 }]]
+    },
+    "Set 7": {
+      "main": [[{ "node": "Set 8", "type": "main", "index": 0 }]]
+    },
+    "Set 8": {
+      "main": [[{ "node": "Set 9", "type": "main", "index": 0 }]]
+    },
+    "Set 9": {
+      "main": [[{ "node": "Set 10", "type": "main", "index": 0 }]]
+    },
+    "Set 10": {
+      "main": [[{ "node": "Set 11", "type": "main", "index": 0 }]]
+    },
+    "Set 11": {
+      "main": [[{ "node": "Set 12", "type": "main", "index": 0 }]]
+    },
+    "Set 12": {
+      "main": [[{ "node": "Set 13", "type": "main", "index": 0 }]]
+    },
+    "Set 13": {
+      "main": [[{ "node": "Set 14", "type": "main", "index": 0 }]]
+    },
+    "Set 14": {
+      "main": [[{ "node": "Set 15", "type": "main", "index": 0 }]]
+    },
+    "Set 15": {
+      "main": [[{ "node": "Set 16", "type": "main", "index": 0 }]]
+    },
+    "Set 16": {
+      "main": [[{ "node": "Set 17", "type": "main", "index": 0 }]]
+    },
+    "Set 17": {
+      "main": [[{ "node": "Set 18", "type": "main", "index": 0 }]]
+    },
+    "Set 18": {
+      "main": [[{ "node": "Vulnerable Code", "type": "main", "index": 0 }]]
+    },
+    "Vulnerable Code": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

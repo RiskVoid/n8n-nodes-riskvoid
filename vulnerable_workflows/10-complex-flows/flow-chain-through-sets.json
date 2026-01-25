@@ -1,0 +1,241 @@
+{
+  "name": "Chain Through Sets Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "transform",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-source",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "webhook-chain"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "rawInput",
+              "value": "={{ $json.body.input }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-1",
+      "name": "Set Step 1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "processed1",
+              "value": "={{ $json.rawInput }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-2",
+      "name": "Set Step 2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "processed2",
+              "value": "={{ $json.processed1 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-3",
+      "name": "Set Step 3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "processed3",
+              "value": "={{ $json.processed2 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-4",
+      "name": "Set Step 4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "processed4",
+              "value": "={{ $json.processed3 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-5",
+      "name": "Set Step 5",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "finalData",
+              "value": "={{ $json.processed4 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-6",
+      "name": "Set Step 6",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1750, 300]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const input = $input.first().json.finalData;\nconst result = eval('const output = ' + input + '; output');\nreturn [{ json: { result } }];"
+      },
+      "id": "code-sink",
+      "name": "Execute Transformed Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2250, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Step 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Step 1": {
+      "main": [
+        [
+          {
+            "node": "Set Step 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Step 2": {
+      "main": [
+        [
+          {
+            "node": "Set Step 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Step 3": {
+      "main": [
+        [
+          {
+            "node": "Set Step 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Step 4": {
+      "main": [
+        [
+          {
+            "node": "Set Step 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Step 5": {
+      "main": [
+        [
+          {
+            "node": "Set Step 6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Step 6": {
+      "main": [
+        [
+          {
+            "node": "Execute Transformed Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Transformed Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "tags": []
+}

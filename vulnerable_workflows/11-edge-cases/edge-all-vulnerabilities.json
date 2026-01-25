@@ -1,0 +1,193 @@
+{
+  "id": "vuln-edge-002",
+  "name": "Edge Case - All Vulnerability Types in One Workflow",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/all-vulns",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract All Inputs",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "code",
+              "value": "={{ $json.body.code }}"
+            },
+            {
+              "name": "command",
+              "value": "={{ $json.body.command }}"
+            },
+            {
+              "name": "sqlQuery",
+              "value": "={{ $json.body.query }}"
+            },
+            {
+              "name": "url",
+              "value": "={{ $json.body.url }}"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.body.prompt }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Vuln 1 - Code Injection",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [500, -200],
+      "parameters": {
+        "jsCode": "// Vulnerability 1: Remote Code Execution\nconst userCode = '{{ $json.code }}';\nconst result = eval(userCode);\nreturn [{json: {result}}];"
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Vuln 2 - Command Injection",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [500, -100],
+      "parameters": {
+        "command": "={{ $json.command }}"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Vuln 3 - SQL Injection",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM users WHERE id = {{ $json.sqlQuery }}"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "mysql-cred-1",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Vuln 4 - SSRF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [500, 100],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "method": "GET"
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Vuln 5 - Prompt Injection",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1,
+      "position": [500, 200],
+      "parameters": {
+        "prompt": "={{ $json.prompt }}"
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-cred-1",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "id": "node-8",
+      "name": "Vuln 6 - Credential Exposure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [500, 300],
+      "parameters": {
+        "url": "https://api.example.com/data",
+        "method": "GET",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-1234567890abcdefghijklmnopqrstuvwxyz"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-9",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 1,
+      "position": [750, 50],
+      "parameters": {
+        "mode": "multiplex"
+      }
+    },
+    {
+      "id": "node-10",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 50],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Extract All Inputs", "type": "main", "index": 0 }]]
+    },
+    "Extract All Inputs": {
+      "main": [[
+        { "node": "Vuln 1 - Code Injection", "type": "main", "index": 0 },
+        { "node": "Vuln 2 - Command Injection", "type": "main", "index": 0 },
+        { "node": "Vuln 3 - SQL Injection", "type": "main", "index": 0 },
+        { "node": "Vuln 4 - SSRF", "type": "main", "index": 0 },
+        { "node": "Vuln 5 - Prompt Injection", "type": "main", "index": 0 },
+        { "node": "Vuln 6 - Credential Exposure", "type": "main", "index": 0 }
+      ]]
+    },
+    "Vuln 1 - Code Injection": {
+      "main": [[{ "node": "Merge Results", "type": "main", "index": 0 }]]
+    },
+    "Vuln 2 - Command Injection": {
+      "main": [[{ "node": "Merge Results", "type": "main", "index": 0 }]]
+    },
+    "Vuln 3 - SQL Injection": {
+      "main": [[{ "node": "Merge Results", "type": "main", "index": 0 }]]
+    },
+    "Vuln 4 - SSRF": {
+      "main": [[{ "node": "Merge Results", "type": "main", "index": 0 }]]
+    },
+    "Vuln 5 - Prompt Injection": {
+      "main": [[{ "node": "Merge Results", "type": "main", "index": 0 }]]
+    },
+    "Vuln 6 - Credential Exposure": {
+      "main": [[{ "node": "Merge Results", "type": "main", "index": 0 }]]
+    },
+    "Merge Results": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "id": "safe-cmdi-001",
+  "name": "SAFE - Manual Trigger with Hardcoded Command",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "node-2",
+      "name": "Set Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "directory",
+              "value": "/var/log"
+            },
+            {
+              "name": "operation",
+              "value": "list"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Safe Command Execution",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "command": "ls -la /var/log"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Set Parameters", "type": "main", "index": 0 }]]
+    },
+    "Set Parameters": {
+      "main": [[{ "node": "Safe Command Execution", "type": "main", "index": 0 }]]
+    }
+  }
+}

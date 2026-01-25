@@ -1,0 +1,116 @@
+{
+  "id": "vuln-ssrf-007",
+  "name": "SSRF - Webhook to HTTP Request (file:// protocol)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/reader",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract File Path",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "filePath",
+              "value": "={{ $json.body.path }}"
+            },
+            {
+              "name": "resourceType",
+              "value": "={{ $json.body.type || 'file' }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Build File URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "targetUrl",
+              "value": "={{ $json.filePath }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Read Resource",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "url": "={{ $json.targetUrl }}",
+        "method": "GET",
+        "options": {
+          "timeout": 5000,
+          "followRedirect": false
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Parse Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "content",
+              "value": "={{ JSON.stringify($json) }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Extract File Path", "type": "main", "index": 0 }]]
+    },
+    "Extract File Path": {
+      "main": [[{ "node": "Build File URL", "type": "main", "index": 0 }]]
+    },
+    "Build File URL": {
+      "main": [[{ "node": "Read Resource", "type": "main", "index": 0 }]]
+    },
+    "Read Resource": {
+      "main": [[{ "node": "Parse Content", "type": "main", "index": 0 }]]
+    },
+    "Parse Content": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

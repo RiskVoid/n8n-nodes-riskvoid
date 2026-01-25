@@ -1,0 +1,130 @@
+{
+  "name": "Webhook Response XSS - vuln-sink-006",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "user-profile",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-respond-001",
+      "name": "Webhook - Profile Viewer",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "respond-xss-001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "username-001",
+              "name": "username",
+              "value": "={{ $json.query.username }}",
+              "type": "string"
+            },
+            {
+              "id": "message-001",
+              "name": "customMessage",
+              "value": "={{ $json.query.message || 'Welcome!' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-profile-data-001",
+      "name": "Extract Profile Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "html-001",
+              "name": "profileHtml",
+              "value": "=<!DOCTYPE html>\n<html>\n<head>\n  <title>User Profile</title>\n  <style>\n    body { font-family: Arial, sans-serif; padding: 20px; }\n    .profile { border: 1px solid #ccc; padding: 20px; border-radius: 8px; }\n    .message { background: #e3f2fd; padding: 10px; margin: 10px 0; }\n  </style>\n</head>\n<body>\n  <div class=\"profile\">\n    <h1>Profile: {{ $json.username }}</h1>\n    <div class=\"message\">\n      <strong>Message:</strong> {{ $json.customMessage }}\n    </div>\n    <p>Thank you for visiting, <strong>{{ $json.username }}</strong>!</p>\n  </div>\n</body>\n</html>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-html-response-001",
+      "name": "Build HTML Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.profileHtml }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-webhook-001",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Profile Viewer": {
+      "main": [
+        [
+          {
+            "node": "Extract Profile Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Profile Data": {
+      "main": [
+        [
+          {
+            "node": "Build HTML Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HTML Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "respond-xss-001"
+}

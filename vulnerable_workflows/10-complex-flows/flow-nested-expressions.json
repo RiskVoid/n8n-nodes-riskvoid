@@ -1,0 +1,170 @@
+{
+  "name": "Nested Expressions Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "user-profile",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-source",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "webhook-nested"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userBio",
+              "value": "={{ $json.body.user.profile.bio }}"
+            },
+            {
+              "name": "firstComment",
+              "value": "={{ $json.body.data[0].content }}"
+            },
+            {
+              "name": "nestedPreference",
+              "value": "={{ $json.body.settings.preferences.theme.customCode }}"
+            },
+            {
+              "name": "deepArray",
+              "value": "={{ $json.body.items[0].metadata.tags[1].value }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-extract-nested",
+      "name": "Extract Nested Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "combinedData",
+              "value": "={{ $json.userBio + ' | ' + $json.firstComment }}"
+            },
+            {
+              "name": "advancedData",
+              "value": "={{ $json.nestedPreference + ' ' + $json.deepArray }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-combine",
+      "name": "Combine Nested Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "finalPayload",
+              "value": "={{ $json.combinedData + ' :: ' + $json.advancedData }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-final",
+      "name": "Final Transform",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const payload = $input.first().json.finalPayload;\nconst fn = new Function('return ' + payload);\nconst result = fn();\nreturn [{ json: { result } }];"
+      },
+      "id": "code-sink",
+      "name": "Execute Dynamic Function",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1500, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Nested Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Nested Fields": {
+      "main": [
+        [
+          {
+            "node": "Combine Nested Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Nested Data": {
+      "main": [
+        [
+          {
+            "node": "Final Transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Transform": {
+      "main": [
+        [
+          {
+            "node": "Execute Dynamic Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Dynamic Function": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "tags": []
+}

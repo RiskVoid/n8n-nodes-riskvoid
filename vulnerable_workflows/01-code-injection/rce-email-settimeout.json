@@ -1,0 +1,81 @@
+{
+  "id": "vuln-rce-003",
+  "name": "RCE - Email to Code with setTimeout",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Email Trigger",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "mailbox": "INBOX",
+        "format": "simple"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Parse Email Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "emailBody",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "emailSubject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "sender",
+              "value": "={{ $json.from }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Extract Code Snippet",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "codeSnippet",
+              "value": "={{ $json.emailBody }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Schedule Code Execution",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "jsCode": "// Vulnerable: setTimeout with string argument from user input\nconst emailCode = '{{ $json.codeSnippet }}';\nconst results = [];\nsetTimeout(emailCode, 100);\nreturn [{json: {scheduled: true, sender: '{{ $json.sender }}'}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Email Trigger": {
+      "main": [[{ "node": "Parse Email Content", "type": "main", "index": 0 }]]
+    },
+    "Parse Email Content": {
+      "main": [[{ "node": "Extract Code Snippet", "type": "main", "index": 0 }]]
+    },
+    "Extract Code Snippet": {
+      "main": [[{ "node": "Schedule Code Execution", "type": "main", "index": 0 }]]
+    }
+  }
+}

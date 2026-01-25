@@ -1,0 +1,240 @@
+{
+  "name": "GitHub Webhook SQL Injection Vulnerability",
+  "nodes": [
+    {
+      "parameters": {
+        "events": [
+          "push",
+          "pull_request",
+          "issues"
+        ],
+        "options": {}
+      },
+      "id": "github-trigger",
+      "name": "GitHub Trigger",
+      "type": "n8n-nodes-base.githubTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "github-webhook-001",
+      "credentials": {
+        "githubApi": {
+          "id": "1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "eventType",
+              "value": "={{ $json.headers['x-github-event'] }}"
+            },
+            {
+              "name": "repository",
+              "value": "={{ $json.body.repository.full_name }}"
+            },
+            {
+              "name": "senderUsername",
+              "value": "={{ $json.body.sender.login }}"
+            },
+            {
+              "name": "commitMessage",
+              "value": "={{ $json.body.head_commit?.message || $json.body.pull_request?.title || $json.body.issue?.title }}"
+            },
+            {
+              "name": "branch",
+              "value": "={{ $json.body.ref?.replace('refs/heads/', '') || 'unknown' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-github-data",
+      "name": "Extract GitHub Event",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO github_events (event_type, repository, sender, message, branch, received_at) VALUES ('{{ $json.eventType }}', '{{ $json.repository }}', '{{ $json.senderUsername }}', '{{ $json.commitMessage }}', '{{ $json.branch }}', NOW())",
+        "options": {}
+      },
+      "id": "postgres-log-event",
+      "name": "Log GitHub Event",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [750, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT * FROM github_users WHERE username = '{{ $('Extract GitHub Event').item.json.senderUsername }}' AND last_commit LIKE '%{{ $('Extract GitHub Event').item.json.commitMessage }}%'",
+        "options": {}
+      },
+      "id": "postgres-find-user",
+      "name": "Find User Activity",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1000, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userFound",
+              "value": "={{ $json.length > 0 ? 'yes' : 'no' }}"
+            },
+            {
+              "name": "recordCount",
+              "value": "={{ $json.length }}"
+            },
+            {
+              "name": "sender",
+              "value": "={{ $('Extract GitHub Event').item.json.senderUsername }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-lookup-result",
+      "name": "Set Lookup Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.userFound }}",
+              "operation": "equal",
+              "value2": "yes"
+            }
+          ]
+        }
+      },
+      "id": "if-user-found",
+      "name": "Check User Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "user_activity_tracked"
+            },
+            {
+              "name": "username",
+              "value": "={{ $json.sender }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-success",
+      "name": "Set Tracking Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1750, 200]
+    }
+  ],
+  "connections": {
+    "GitHub Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract GitHub Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract GitHub Event": {
+      "main": [
+        [
+          {
+            "node": "Log GitHub Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log GitHub Event": {
+      "main": [
+        [
+          {
+            "node": "Find User Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find User Activity": {
+      "main": [
+        [
+          {
+            "node": "Set Lookup Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Lookup Result": {
+      "main": [
+        [
+          {
+            "node": "Check User Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check User Found": {
+      "main": [
+        [
+          {
+            "node": "Set Tracking Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "1"
+}

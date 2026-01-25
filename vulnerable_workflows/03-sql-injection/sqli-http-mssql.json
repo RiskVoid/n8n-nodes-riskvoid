@@ -1,0 +1,135 @@
+{
+  "id": "vuln-sqli-007",
+  "name": "SQLi - HTTP Request to MS SQL with raw query",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Schedule Daily Import",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Fetch External Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "url": "https://api.external-service.com/data",
+        "authentication": "genericCredentialType",
+        "options": {}
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "7",
+          "name": "External API"
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Extract Data Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "productName",
+              "value": "={{ $json.product_name }}"
+            },
+            {
+              "name": "category",
+              "value": "={{ $json.category }}"
+            },
+            {
+              "name": "price",
+              "value": "={{ $json.price }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Build Upsert Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "upsertQuery",
+              "value": "IF EXISTS (SELECT * FROM products WHERE name = '{{ $json.productName }}') UPDATE products SET category = '{{ $json.category }}', price = {{ $json.price }} WHERE name = '{{ $json.productName }}' ELSE INSERT INTO products (name, category, price) VALUES ('{{ $json.productName }}', '{{ $json.category }}', {{ $json.price }})"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Execute Upsert",
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.upsertQuery }}"
+      },
+      "credentials": {
+        "microsoftSql": {
+          "id": "8",
+          "name": "MSSQL account"
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Log Import",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "logMessage",
+              "value": "Imported product: {{ $json.productName }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Daily Import": {
+      "main": [[{ "node": "Fetch External Data", "type": "main", "index": 0 }]]
+    },
+    "Fetch External Data": {
+      "main": [[{ "node": "Extract Data Fields", "type": "main", "index": 0 }]]
+    },
+    "Extract Data Fields": {
+      "main": [[{ "node": "Build Upsert Query", "type": "main", "index": 0 }]]
+    },
+    "Build Upsert Query": {
+      "main": [[{ "node": "Execute Upsert", "type": "main", "index": 0 }]]
+    },
+    "Execute Upsert": {
+      "main": [[{ "node": "Log Import", "type": "main", "index": 0 }]]
+    }
+  }
+}

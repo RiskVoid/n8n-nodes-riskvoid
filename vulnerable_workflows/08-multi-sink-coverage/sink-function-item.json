@@ -1,0 +1,125 @@
+{
+  "name": "FunctionItem Code Injection - vuln-sink-003",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "transform-items",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-functionitem-001",
+      "name": "Webhook - Batch Transform",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "functionitem-inject-001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "transform-001",
+              "name": "transformCode",
+              "value": "={{ $json.body.transformLogic }}",
+              "type": "string"
+            },
+            {
+              "id": "items-001",
+              "name": "itemsToProcess",
+              "value": "={{ $json.body.items }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-transform-logic-001",
+      "name": "Set Transform Logic",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// User-provided per-item transform\nconst transformLogic = $input.item.json.transformCode;\nconst item = $input.item.json;\n\n// Execute transform on this item\nconst transform = new Function('item', transformLogic);\nconst transformed = transform(item);\n\nreturn { json: transformed };"
+      },
+      "id": "functionitem-execute-001",
+      "name": "Transform Each Item",
+      "type": "n8n-nodes-base.functionItem",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "count-001",
+              "name": "itemsProcessed",
+              "value": "={{ $input.all().length }}",
+              "type": "number"
+            },
+            {
+              "id": "status-001",
+              "name": "status",
+              "value": "completed",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-summary-001",
+      "name": "Summarize Results",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Batch Transform": {
+      "main": [
+        [
+          {
+            "node": "Set Transform Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Transform Logic": {
+      "main": [
+        [
+          {
+            "node": "Transform Each Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Each Item": {
+      "main": [
+        [
+          {
+            "node": "Summarize Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "functionitem-vuln-001"
+}

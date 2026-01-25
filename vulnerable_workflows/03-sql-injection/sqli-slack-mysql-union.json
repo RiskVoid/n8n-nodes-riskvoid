@@ -1,0 +1,156 @@
+{
+  "id": "vuln-sqli-005",
+  "name": "SQLi - Slack to MySQL with UNION injection pattern",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Slack Events",
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "events": [
+          "message"
+        ]
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "5",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Parse Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "messageText",
+              "value": "={{ $json.event.text }}"
+            },
+            {
+              "name": "channelId",
+              "value": "={{ $json.event.channel }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.event.user }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Extract Report ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "reportId",
+              "value": "={{ $json.messageText.match(/report (\\d+)/)[1] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Build Report Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "reportQuery",
+              "value": "SELECT id, title, status FROM reports WHERE id = {{ $json.reportId }} ORDER BY created_at DESC"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Fetch Report",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.reportQuery }}"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "formattedReport",
+              "value": "Report #{{ $json.id }}: {{ $json.title }} ({{ $json.status }})"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Reply to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1500, 0],
+      "parameters": {
+        "operation": "post",
+        "channelId": "={{ $json.channelId }}",
+        "text": "={{ $json.formattedReport }}"
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "5",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Slack Events": {
+      "main": [[{ "node": "Parse Message", "type": "main", "index": 0 }]]
+    },
+    "Parse Message": {
+      "main": [[{ "node": "Extract Report ID", "type": "main", "index": 0 }]]
+    },
+    "Extract Report ID": {
+      "main": [[{ "node": "Build Report Query", "type": "main", "index": 0 }]]
+    },
+    "Build Report Query": {
+      "main": [[{ "node": "Fetch Report", "type": "main", "index": 0 }]]
+    },
+    "Fetch Report": {
+      "main": [[{ "node": "Format Response", "type": "main", "index": 0 }]]
+    },
+    "Format Response": {
+      "main": [[{ "node": "Reply to Slack", "type": "main", "index": 0 }]]
+    }
+  }
+}

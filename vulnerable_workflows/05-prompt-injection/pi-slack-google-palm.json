@@ -1,0 +1,97 @@
+{
+  "id": "vuln-pi-005",
+  "name": "PI - Slack to Google PaLM",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Slack Trigger",
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "triggerOn": "message"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Slack Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "messageText",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "user",
+              "value": "={{ $json.user }}"
+            },
+            {
+              "name": "channel",
+              "value": "={{ $json.channel }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Prepare AI Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "query",
+              "value": "Process this Slack message and respond appropriately: {{ $json.messageText }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Google PaLM",
+      "type": "@n8n/n8n-nodes-langchain.googlePalm",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "modelName": "text-bison-001",
+        "prompt": "={{ $json.query }}"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "={{ $('Extract Slack Data').item.json.channel }}",
+        "text": "={{ $json.response }}"
+      }
+    }
+  ],
+  "connections": {
+    "Slack Trigger": {
+      "main": [[{ "node": "Extract Slack Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Slack Data": {
+      "main": [[{ "node": "Prepare AI Input", "type": "main", "index": 0 }]]
+    },
+    "Prepare AI Input": {
+      "main": [[{ "node": "Google PaLM", "type": "main", "index": 0 }]]
+    },
+    "Google PaLM": {
+      "main": [[{ "node": "Post to Slack", "type": "main", "index": 0 }]]
+    }
+  }
+}

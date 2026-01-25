@@ -1,0 +1,143 @@
+{
+  "id": "vuln-ssrf-005",
+  "name": "SSRF - SlackTrigger to HTTP Request (AWS Metadata - CRITICAL)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Slack Events",
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "events": ["message"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Slack Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "messageText",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "channel",
+              "value": "={{ $json.channel }}"
+            },
+            {
+              "name": "user",
+              "value": "={{ $json.user }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Parse URL Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "targetUrl",
+              "value": "={{ $json.messageText.replace('/fetch ', '') }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Prepare Metadata Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "metadataUrl",
+              "value": "={{ $json.targetUrl }}"
+            },
+            {
+              "name": "requestType",
+              "value": "metadata_fetch"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Fetch AWS Metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "url": "={{ $json.metadataUrl }}",
+        "method": "GET",
+        "options": {
+          "timeout": 2000
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "result",
+              "value": "={{ JSON.stringify($json) }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Send to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1500, 0],
+      "parameters": {
+        "operation": "postMessage",
+        "channel": "={{ $('Extract Slack Message').item.json.channel }}",
+        "text": "Fetched data: {{ $json.result }}"
+      }
+    }
+  ],
+  "connections": {
+    "Slack Events": {
+      "main": [[{ "node": "Extract Slack Message", "type": "main", "index": 0 }]]
+    },
+    "Extract Slack Message": {
+      "main": [[{ "node": "Parse URL Command", "type": "main", "index": 0 }]]
+    },
+    "Parse URL Command": {
+      "main": [[{ "node": "Prepare Metadata Request", "type": "main", "index": 0 }]]
+    },
+    "Prepare Metadata Request": {
+      "main": [[{ "node": "Fetch AWS Metadata", "type": "main", "index": 0 }]]
+    },
+    "Fetch AWS Metadata": {
+      "main": [[{ "node": "Format Response", "type": "main", "index": 0 }]]
+    },
+    "Format Response": {
+      "main": [[{ "node": "Send to Slack", "type": "main", "index": 0 }]]
+    }
+  }
+}

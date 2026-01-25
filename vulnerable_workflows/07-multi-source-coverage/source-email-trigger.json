@@ -1,0 +1,197 @@
+{
+  "name": "Email Trigger SQL Injection Vulnerability",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "email-trigger",
+      "name": "Email Trigger",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.1,
+      "position": [250, 300],
+      "credentials": {
+        "imap": {
+          "id": "1",
+          "name": "IMAP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "subject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "from",
+              "value": "={{ $json.from.value[0].address }}"
+            },
+            {
+              "name": "textBody",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "messageId",
+              "value": "={{ $json.messageId }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.text.match(/User ID: (\\d+)/)?.[1] || 'unknown' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-email-fields",
+      "name": "Parse Email Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO email_logs (subject, sender, message_id, user_id, received_at) VALUES ('{{ $json.subject }}', '{{ $json.from }}', '{{ $json.messageId }}', '{{ $json.userId }}', NOW())",
+        "options": {}
+      },
+      "id": "mysql-log-email",
+      "name": "Log Email to Database",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [750, 300],
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT * FROM users WHERE id = {{ $('Parse Email Content').item.json.userId }} AND email = '{{ $('Parse Email Content').item.json.from }}'",
+        "options": {}
+      },
+      "id": "mysql-find-user",
+      "name": "Find User Record",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [1000, 300],
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.length }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "if-user-found",
+      "name": "Check User Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "user_found"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json[0].id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-success",
+      "name": "Set User Found",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1500, 200]
+    }
+  ],
+  "connections": {
+    "Email Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Email Content": {
+      "main": [
+        [
+          {
+            "node": "Log Email to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Email to Database": {
+      "main": [
+        [
+          {
+            "node": "Find User Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find User Record": {
+      "main": [
+        [
+          {
+            "node": "Check User Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check User Found": {
+      "main": [
+        [
+          {
+            "node": "Set User Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "1"
+}

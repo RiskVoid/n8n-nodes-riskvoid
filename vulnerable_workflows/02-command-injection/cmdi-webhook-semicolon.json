@@ -1,0 +1,91 @@
+{
+  "id": "vuln-cmdi-001",
+  "name": "Command Injection - Webhook with Semicolon Chaining",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/run-command",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "filename",
+              "value": "={{ $json.body.filename }}"
+            },
+            {
+              "name": "operation",
+              "value": "={{ $json.body.operation }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Build Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "command",
+              "value": "cat {{ $json.filename }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Execute Shell Command",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "command": "={{ $json.command }}"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Extract Parameters", "type": "main", "index": 0 }]]
+    },
+    "Extract Parameters": {
+      "main": [[{ "node": "Build Command", "type": "main", "index": 0 }]]
+    },
+    "Build Command": {
+      "main": [[{ "node": "Execute Shell Command", "type": "main", "index": 0 }]]
+    },
+    "Execute Shell Command": {
+      "main": [[{ "node": "Return Result", "type": "main", "index": 0 }]]
+    }
+  }
+}

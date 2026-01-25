@@ -1,0 +1,129 @@
+{
+  "id": "vuln-pi-002",
+  "name": "PI - Form Trigger to Anthropic High-Risk",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/feedback",
+        "formTitle": "Customer Feedback",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Feedback",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "Instructions",
+              "fieldType": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Form Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "feedback",
+              "value": "={{ $json.feedback }}"
+            },
+            {
+              "name": "instructions",
+              "value": "={{ $json.instructions }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Format for AI",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "systemPrompt",
+              "value": "Analyze this feedback and {{ $json.instructions }}"
+            },
+            {
+              "name": "userContent",
+              "value": "{{ $json.feedback }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Anthropic Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "text": "={{ $json.systemPrompt }} Content: {{ $json.userContent }}"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Store Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "analysis",
+              "value": "={{ $json.response }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "toEmail": "admin@company.com",
+        "subject": "Feedback Analysis",
+        "text": "={{ $json.analysis }}"
+      }
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [[{ "node": "Extract Form Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Form Data": {
+      "main": [[{ "node": "Format for AI", "type": "main", "index": 0 }]]
+    },
+    "Format for AI": {
+      "main": [[{ "node": "Anthropic Claude", "type": "main", "index": 0 }]]
+    },
+    "Anthropic Claude": {
+      "main": [[{ "node": "Store Result", "type": "main", "index": 0 }]]
+    },
+    "Store Result": {
+      "main": [[{ "node": "Send Email", "type": "main", "index": 0 }]]
+    }
+  }
+}

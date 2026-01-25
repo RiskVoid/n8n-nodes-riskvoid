@@ -1,0 +1,182 @@
+{
+  "name": "vuln-sanitizer-005",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-005",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "sanitizer-005"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-001",
+              "name": "scriptName",
+              "value": "={{ $json.body.scriptName }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-002",
+              "name": "scriptArgs",
+              "value": "={{ $json.body.scriptArgs }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-005",
+      "name": "Extract Script Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "id": "condition-001",
+              "value1": "={{ $json.scriptName }}",
+              "operation": "regex",
+              "value2": "^[a-zA-Z0-9_-]+$"
+            }
+          ]
+        }
+      },
+      "id": "if-005",
+      "name": "Check Script Name Format",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "id": "condition-002",
+              "value1": "={{ $json.scriptArgs.length }}",
+              "operation": "smaller",
+              "value2": 10
+            }
+          ]
+        },
+        "combineOperation": "all"
+      },
+      "id": "filter-005",
+      "name": "Filter Large Payloads",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [1000, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Additional validation on script arguments\nconst scriptName = $input.item.json.scriptName;\nconst scriptArgs = $input.item.json.scriptArgs;\n\n// Validate each argument\nconst validatedArgs = scriptArgs.map(arg => {\n  // Ensure each arg is a string and alphanumeric\n  if (typeof arg !== 'string') {\n    throw new Error('Invalid argument type');\n  }\n  if (!/^[a-zA-Z0-9_-]+$/.test(arg)) {\n    throw new Error('Invalid argument format');\n  }\n  return arg;\n});\n\nreturn {\n  scriptName,\n  validatedArgs\n};"
+      },
+      "id": "code-005",
+      "name": "Validate Arguments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Execute the script with validated inputs\nconst scriptName = $input.item.json.scriptName;\nconst args = $input.item.json.validatedArgs;\n\n// Build and execute command\nconst command = `${scriptName} ${args.join(' ')}`;\nconst result = eval(command);\n\nreturn { result };"
+      },
+      "id": "code-006",
+      "name": "Execute Script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { error: 'Invalid script name' };"
+      },
+      "id": "code-007",
+      "name": "Return Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 400]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Script Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Script Data": {
+      "main": [
+        [
+          {
+            "node": "Check Script Name Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Script Name Format": {
+      "main": [
+        [
+          {
+            "node": "Filter Large Payloads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Large Payloads": {
+      "main": [
+        [
+          {
+            "node": "Validate Arguments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Arguments": {
+      "main": [
+        [
+          {
+            "node": "Execute Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

@@ -1,0 +1,96 @@
+{
+  "id": "vuln-rce-004",
+  "name": "RCE - Slack to Code with Python exec()",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Slack Trigger",
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "updates": ["message"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "user",
+              "value": "={{ $json.user }}"
+            },
+            {
+              "name": "channel",
+              "value": "={{ $json.channel }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Process Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "pythonCommand",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Execute Python Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "python",
+        "pythonCode": "# Vulnerable: Python exec() with user input from Slack\nuser_command = '{{ $json.pythonCommand }}'\nexec(user_command)\nreturn [{'json': {'executed': True, 'user': '{{ $json.user }}'}}]"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "channelId": "={{ $('Extract Message').item.json.channel }}",
+        "text": "Command executed successfully"
+      }
+    }
+  ],
+  "connections": {
+    "Slack Trigger": {
+      "main": [[{ "node": "Extract Message", "type": "main", "index": 0 }]]
+    },
+    "Extract Message": {
+      "main": [[{ "node": "Process Command", "type": "main", "index": 0 }]]
+    },
+    "Process Command": {
+      "main": [[{ "node": "Execute Python Code", "type": "main", "index": 0 }]]
+    },
+    "Execute Python Code": {
+      "main": [[{ "node": "Send Confirmation", "type": "main", "index": 0 }]]
+    }
+  }
+}

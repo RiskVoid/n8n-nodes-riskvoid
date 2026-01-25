@@ -1,0 +1,128 @@
+{
+  "name": "vuln-sanitizer-006",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "admin",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-006",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "sanitizer-006"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-001",
+              "name": "username",
+              "value": "={{ $json.body.username }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-002",
+              "name": "adminCode",
+              "value": "={{ $json.body.adminCode }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-006",
+      "name": "Extract Admin Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "id": "condition-001",
+              "value1": "={{ $json.username }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "if-006",
+      "name": "Check Username Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Execute admin code with username\nconst username = $input.item.json.username;\nconst adminCode = $input.item.json.adminCode;\n\n// Weak validation - checks if username exists but doesn't validate content\n// User can still inject malicious code through adminCode\nconst result = eval(`runAdmin_${username}('${adminCode}')`);\n\nreturn { result, username };"
+      },
+      "id": "code-006",
+      "name": "Execute Admin Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { error: 'Username required' };"
+      },
+      "id": "code-007",
+      "name": "Return Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 400]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Admin Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Admin Request": {
+      "main": [
+        [
+          {
+            "node": "Check Username Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Username Exists": {
+      "main": [
+        [
+          {
+            "node": "Execute Admin Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

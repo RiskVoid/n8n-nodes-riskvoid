@@ -1,0 +1,94 @@
+{
+  "id": "vuln-cmdi-006",
+  "name": "Command Injection - Slack with Variable Expansion",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Slack Trigger",
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "updates": ["message"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Parse Slack Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "user",
+              "value": "={{ $json.user }}"
+            },
+            {
+              "name": "channel",
+              "value": "={{ $json.channel }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Format Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "commandString",
+              "value": "ls -la {{ $json.text }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Execute Listing",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "command": "={{ $json.commandString }}"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Post Results",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "channelId": "={{ $('Parse Slack Message').item.json.channel }}",
+        "text": "Command completed"
+      }
+    }
+  ],
+  "connections": {
+    "Slack Trigger": {
+      "main": [[{ "node": "Parse Slack Message", "type": "main", "index": 0 }]]
+    },
+    "Parse Slack Message": {
+      "main": [[{ "node": "Format Command", "type": "main", "index": 0 }]]
+    },
+    "Format Command": {
+      "main": [[{ "node": "Execute Listing", "type": "main", "index": 0 }]]
+    },
+    "Execute Listing": {
+      "main": [[{ "node": "Post Results", "type": "main", "index": 0 }]]
+    }
+  }
+}

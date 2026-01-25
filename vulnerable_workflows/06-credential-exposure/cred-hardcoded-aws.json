@@ -1,0 +1,138 @@
+{
+  "id": "vuln-cred-003",
+  "name": "Hardcoded AWS Access Key in Set Node",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/deploy",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Set AWS Credentials",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "AWS_ACCESS_KEY_ID",
+              "value": "AKIAIOSFODNN7EXAMPLE"
+            },
+            {
+              "name": "AWS_SECRET_ACCESS_KEY",
+              "value": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            },
+            {
+              "name": "AWS_REGION",
+              "value": "us-east-1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Extract Deployment Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "bucket",
+              "value": "={{ $('Webhook Trigger').item.json.body.bucket }}"
+            },
+            {
+              "name": "key",
+              "value": "={{ $('Webhook Trigger').item.json.body.key }}"
+            },
+            {
+              "name": "accessKey",
+              "value": "={{ $json.AWS_ACCESS_KEY_ID }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Build S3 URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "s3Url",
+              "value": "=https://{{ $json.bucket }}.s3.amazonaws.com/{{ $json.key }}"
+            },
+            {
+              "name": "credentials",
+              "value": "={{ $('Set AWS Credentials').item.json.AWS_ACCESS_KEY_ID }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Upload to S3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "url": "={{ $json.s3Url }}",
+        "method": "PUT",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=AWS4-HMAC-SHA256 Credential={{ $json.credentials }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"status\": \"deployed\", \"url\": $json.s3Url} }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Set AWS Credentials", "type": "main", "index": 0 }]]
+    },
+    "Set AWS Credentials": {
+      "main": [[{ "node": "Extract Deployment Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Deployment Data": {
+      "main": [[{ "node": "Build S3 URL", "type": "main", "index": 0 }]]
+    },
+    "Build S3 URL": {
+      "main": [[{ "node": "Upload to S3", "type": "main", "index": 0 }]]
+    },
+    "Upload to S3": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

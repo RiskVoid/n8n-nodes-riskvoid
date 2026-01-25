@@ -1,0 +1,95 @@
+{
+  "id": "vuln-ssrf-001",
+  "name": "SSRF - Webhook to HTTP Request (localhost)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/fetch",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "targetUrl",
+              "value": "={{ $json.body.url }}"
+            },
+            {
+              "name": "method",
+              "value": "={{ $json.body.method || 'GET' }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Prepare Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "requestUrl",
+              "value": "={{ $json.targetUrl }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Fetch Resource",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "url": "={{ $json.requestUrl }}",
+        "method": "GET",
+        "options": {
+          "timeout": 5000
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Extract URL", "type": "main", "index": 0 }]]
+    },
+    "Extract URL": {
+      "main": [[{ "node": "Prepare Request", "type": "main", "index": 0 }]]
+    },
+    "Prepare Request": {
+      "main": [[{ "node": "Fetch Resource", "type": "main", "index": 0 }]]
+    },
+    "Fetch Resource": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "id": "vuln-rce-002",
+  "name": "RCE - Form to Code with Function Constructor",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "formTitle": "Code Execution Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Code to Execute",
+              "fieldType": "textarea"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Form Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "formCode",
+              "value": "={{ $json['Code to Execute'] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Prepare Execution",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "codeToRun",
+              "value": "={{ $json.formCode }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $now }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Execute Dynamic Function",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "jsCode": "// Vulnerable: using Function constructor with user input\nconst userCode = '{{ $json.codeToRun }}';\nconst dynamicFunc = new Function('return ' + userCode);\nconst result = dynamicFunc();\nreturn [{json: {result, timestamp: '{{ $json.timestamp }}'}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [[{ "node": "Extract Form Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Form Data": {
+      "main": [[{ "node": "Prepare Execution", "type": "main", "index": 0 }]]
+    },
+    "Prepare Execution": {
+      "main": [[{ "node": "Execute Dynamic Function", "type": "main", "index": 0 }]]
+    }
+  }
+}

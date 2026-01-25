@@ -1,0 +1,119 @@
+{
+  "id": "vuln-ssrf-004",
+  "name": "SSRF - TelegramTrigger to HTTP Request (192.168.x.x)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Telegram Bot",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "updates": ["message"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userMessage",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.message.from.id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Parse Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "targetUrl",
+              "value": "={{ $json.userMessage.split(' ')[1] }}"
+            },
+            {
+              "name": "command",
+              "value": "={{ $json.userMessage.split(' ')[0] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Build API Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "apiEndpoint",
+              "value": "={{ $json.targetUrl }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Fetch Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "url": "={{ $json.apiEndpoint }}",
+        "method": "GET",
+        "options": {
+          "timeout": 3000
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $('Extract Message').item.json.userId }}",
+        "text": "Data fetched: {{ JSON.stringify($json) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Bot": {
+      "main": [[{ "node": "Extract Message", "type": "main", "index": 0 }]]
+    },
+    "Extract Message": {
+      "main": [[{ "node": "Parse Command", "type": "main", "index": 0 }]]
+    },
+    "Parse Command": {
+      "main": [[{ "node": "Build API Request", "type": "main", "index": 0 }]]
+    },
+    "Build API Request": {
+      "main": [[{ "node": "Fetch Data", "type": "main", "index": 0 }]]
+    },
+    "Fetch Data": {
+      "main": [[{ "node": "Send Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

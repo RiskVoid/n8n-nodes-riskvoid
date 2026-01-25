@@ -1,0 +1,118 @@
+{
+  "id": "vuln-sqli-001",
+  "name": "SQLi - Webhook to MySQL with raw SELECT",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "User Search API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/search",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Search Params",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "searchTerm",
+              "value": "={{ $json.body.query }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.body.userId }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Build Search Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "sqlQuery",
+              "value": "SELECT * FROM users WHERE username LIKE '%{{ $json.searchTerm }}%' AND status = 'active'"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Execute Search",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.sqlQuery }}"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Format Results",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "results",
+              "value": "={{ $json }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "User Search API": {
+      "main": [[{ "node": "Extract Search Params", "type": "main", "index": 0 }]]
+    },
+    "Extract Search Params": {
+      "main": [[{ "node": "Build Search Query", "type": "main", "index": 0 }]]
+    },
+    "Build Search Query": {
+      "main": [[{ "node": "Execute Search", "type": "main", "index": 0 }]]
+    },
+    "Execute Search": {
+      "main": [[{ "node": "Format Results", "type": "main", "index": 0 }]]
+    },
+    "Format Results": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

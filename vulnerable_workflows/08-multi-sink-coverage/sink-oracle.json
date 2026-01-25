@@ -1,0 +1,145 @@
+{
+  "name": "Oracle Database SQL Injection - vuln-sink-005",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "order-report",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-oracle-001",
+      "name": "Webhook - Order Report",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "oracle-inject-001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "customer-001",
+              "name": "customerId",
+              "value": "={{ $json.body.customerId }}",
+              "type": "string"
+            },
+            {
+              "id": "daterange-001",
+              "name": "dateFilter",
+              "value": "={{ $json.body.dateRange || 'LAST_30_DAYS' }}",
+              "type": "string"
+            },
+            {
+              "id": "status-001",
+              "name": "orderStatus",
+              "value": "={{ $json.body.status || 'COMPLETED' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-report-params-001",
+      "name": "Set Report Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  o.order_id,\n  o.customer_id,\n  o.order_date,\n  o.total_amount,\n  o.status,\n  c.customer_name\nFROM orders o\nJOIN customers c ON o.customer_id = c.customer_id\nWHERE o.customer_id = '{{ $json.customerId }}'\n  AND o.status = '{{ $json.orderStatus }}'\n  AND o.order_date >= SYSDATE - INTERVAL '30' DAY\nORDER BY o.order_date DESC",
+        "options": {}
+      },
+      "id": "oracle-query-001",
+      "name": "Execute Order Report Query",
+      "type": "n8n-nodes-base.oracleDb",
+      "typeVersion": 2.1,
+      "position": [750, 300],
+      "credentials": {
+        "oracleDb": {
+          "id": "1",
+          "name": "Oracle ERP Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "orders-001",
+              "name": "orders",
+              "value": "={{ $json }}",
+              "type": "array"
+            },
+            {
+              "id": "total-001",
+              "name": "totalOrders",
+              "value": "={{ $input.all().length }}",
+              "type": "number"
+            },
+            {
+              "id": "customer-001",
+              "name": "customerId",
+              "value": "={{ $('Set Report Parameters').item.json.customerId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-report-output-001",
+      "name": "Format Report Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Order Report": {
+      "main": [
+        [
+          {
+            "node": "Set Report Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Report Parameters": {
+      "main": [
+        [
+          {
+            "node": "Execute Order Report Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Order Report Query": {
+      "main": [
+        [
+          {
+            "node": "Format Report Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "oracle-vuln-001"
+}

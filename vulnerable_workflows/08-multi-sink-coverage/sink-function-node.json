@@ -1,0 +1,125 @@
+{
+  "name": "Function Node Code Injection - vuln-sink-002",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-data",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-function-001",
+      "name": "Webhook - Data Processing",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "function-inject-001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "logic-001",
+              "name": "processingLogic",
+              "value": "={{ $json.body.logic }}",
+              "type": "string"
+            },
+            {
+              "id": "data-001",
+              "name": "inputData",
+              "value": "={{ $json.body.data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-function-params-001",
+      "name": "Set Processing Logic",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Dynamic processing logic\nconst logic = $input.first().json.processingLogic;\nconst data = $input.first().json.inputData;\n\n// Execute user-provided logic\nconst processData = new Function('data', logic);\nconst result = processData(data);\n\nreturn [{ json: { result: result } }];"
+      },
+      "id": "function-execute-001",
+      "name": "Execute Processing Logic",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "result-001",
+              "name": "processedData",
+              "value": "={{ $json.result }}",
+              "type": "string"
+            },
+            {
+              "id": "timestamp-001",
+              "name": "processedAt",
+              "value": "={{ $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-response-001",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Data Processing": {
+      "main": [
+        [
+          {
+            "node": "Set Processing Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Processing Logic": {
+      "main": [
+        [
+          {
+            "node": "Execute Processing Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Processing Logic": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
+  "versionId": "function-vuln-001"
+}

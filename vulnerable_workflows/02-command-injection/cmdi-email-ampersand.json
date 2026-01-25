@@ -1,0 +1,77 @@
+{
+  "id": "vuln-cmdi-003",
+  "name": "Command Injection - Email with Ampersand Background",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Email Trigger",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "mailbox": "INBOX",
+        "format": "simple"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Parse Email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "emailBody",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ $json.subject }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Extract Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "taskCommand",
+              "value": "={{ $json.emailBody }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Execute Task",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "command": "echo Processing && {{ $json.taskCommand }}"
+      }
+    }
+  ],
+  "connections": {
+    "Email Trigger": {
+      "main": [[{ "node": "Parse Email", "type": "main", "index": 0 }]]
+    },
+    "Parse Email": {
+      "main": [[{ "node": "Extract Command", "type": "main", "index": 0 }]]
+    },
+    "Extract Command": {
+      "main": [[{ "node": "Execute Task", "type": "main", "index": 0 }]]
+    }
+  }
+}

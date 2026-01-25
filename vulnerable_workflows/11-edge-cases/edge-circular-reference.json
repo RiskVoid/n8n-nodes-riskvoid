@@ -1,0 +1,155 @@
+{
+  "id": "edge-003",
+  "name": "Edge Case - Circular Reference with Vulnerable Code",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/circular",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Node A - Extract Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "userInput",
+              "value": "={{ $json.body.data }}"
+            },
+            {
+              "name": "counter",
+              "value": "={{ $json.counter || 0 }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Node B - Check Counter",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.counter }}",
+              "operation": "smaller",
+              "value2": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Node C - Increment",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, -100],
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "counter",
+              "value": "={{ $json.counter + 1 }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Vulnerable Code in Cycle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1000, -100],
+      "parameters": {
+        "jsCode": "// Vulnerable code inside circular reference\nconst userInput = '{{ $json.userInput }}';\nconst counter = {{ $json.counter }};\n\n// This would execute multiple times in a cycle\nconst result = eval(userInput);\n\nreturn [{json: {result, counter}}];"
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Loop Back to A",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, -100],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "loopback",
+              "value": "true"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Exit Loop",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 100],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "completed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-8",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 100],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Node A - Extract Input", "type": "main", "index": 0 }]]
+    },
+    "Node A - Extract Input": {
+      "main": [[{ "node": "Node B - Check Counter", "type": "main", "index": 0 }]]
+    },
+    "Node B - Check Counter": {
+      "main": [
+        [{ "node": "Node C - Increment", "type": "main", "index": 0 }],
+        [{ "node": "Exit Loop", "type": "main", "index": 0 }]
+      ]
+    },
+    "Node C - Increment": {
+      "main": [[{ "node": "Vulnerable Code in Cycle", "type": "main", "index": 0 }]]
+    },
+    "Vulnerable Code in Cycle": {
+      "main": [[{ "node": "Loop Back to A", "type": "main", "index": 0 }]]
+    },
+    "Loop Back to A": {
+      "main": [[{ "node": "Node A - Extract Input", "type": "main", "index": 0 }]]
+    },
+    "Exit Loop": {
+      "main": [[{ "node": "Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

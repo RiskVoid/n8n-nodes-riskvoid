@@ -1,0 +1,136 @@
+{
+  "id": "vuln-sqli-004",
+  "name": "SQLi - Telegram to Postgres with raw DELETE",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Telegram Bot",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "updates": [
+          "message"
+        ]
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "4",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Parse Bot Command",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "command",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.message.from.id }}"
+            },
+            {
+              "name": "username",
+              "value": "={{ $json.message.from.username }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Extract Record ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "recordId",
+              "value": "={{ $json.command.replace('/delete ', '') }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Build Delete Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "deleteQuery",
+              "value": "DELETE FROM user_data WHERE id = {{ $json.recordId }} AND telegram_id = '{{ $json.userId }}'"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Execute Delete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.deleteQuery }}"
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $json.userId }}",
+        "text": "Record deleted successfully"
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "4",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Bot": {
+      "main": [[{ "node": "Parse Bot Command", "type": "main", "index": 0 }]]
+    },
+    "Parse Bot Command": {
+      "main": [[{ "node": "Extract Record ID", "type": "main", "index": 0 }]]
+    },
+    "Extract Record ID": {
+      "main": [[{ "node": "Build Delete Query", "type": "main", "index": 0 }]]
+    },
+    "Build Delete Query": {
+      "main": [[{ "node": "Execute Delete", "type": "main", "index": 0 }]]
+    },
+    "Execute Delete": {
+      "main": [[{ "node": "Send Confirmation", "type": "main", "index": 0 }]]
+    }
+  }
+}

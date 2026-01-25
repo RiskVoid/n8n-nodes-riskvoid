@@ -1,0 +1,96 @@
+{
+  "id": "vuln-rce-006",
+  "name": "RCE - Discord to Code with vm.runInNewContext",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Discord Trigger",
+      "type": "n8n-nodes-base.discordTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "events": ["messageCreate"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Parse Discord Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "content",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "author",
+              "value": "={{ $json.author }}"
+            },
+            {
+              "name": "channelId",
+              "value": "={{ $json.channel }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Extract Code Block",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "codeToEval",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Execute in VM Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "jsCode": "// Vulnerable: vm.runInNewContext with user input\nconst vm = require('vm');\nconst userCode = '{{ $json.codeToEval }}';\nconst sandbox = {result: null};\nvm.runInNewContext(userCode, sandbox);\nreturn [{json: {executed: true, result: sandbox.result, author: '{{ $json.author }}'}}];"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Send Result",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "channelId": "={{ $('Parse Discord Message').item.json.channelId }}",
+        "content": "Executed successfully"
+      }
+    }
+  ],
+  "connections": {
+    "Discord Trigger": {
+      "main": [[{ "node": "Parse Discord Message", "type": "main", "index": 0 }]]
+    },
+    "Parse Discord Message": {
+      "main": [[{ "node": "Extract Code Block", "type": "main", "index": 0 }]]
+    },
+    "Extract Code Block": {
+      "main": [[{ "node": "Execute in VM Context", "type": "main", "index": 0 }]]
+    },
+    "Execute in VM Context": {
+      "main": [[{ "node": "Send Result", "type": "main", "index": 0 }]]
+    }
+  }
+}

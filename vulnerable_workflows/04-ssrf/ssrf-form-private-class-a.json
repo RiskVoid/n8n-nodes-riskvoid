@@ -1,0 +1,123 @@
+{
+  "id": "vuln-ssrf-002",
+  "name": "SSRF - FormTrigger to HTTP Request (10.x.x.x)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "formTitle": "API Proxy Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Internal API URL",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "API Key",
+              "fieldType": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Form Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "targetUrl",
+              "value": "={{ $json['Internal API URL'] }}"
+            },
+            {
+              "name": "apiKey",
+              "value": "={{ $json['API Key'] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Build Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "url",
+              "value": "={{ $json.targetUrl }}"
+            },
+            {
+              "name": "authorization",
+              "value": "Bearer {{ $json.apiKey }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Call Internal API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "method": "GET",
+        "options": {
+          "headers": {
+            "Authorization": "={{ $json.authorization }}"
+          }
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "success"
+            },
+            {
+              "name": "data",
+              "value": "={{ JSON.stringify($json) }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [[{ "node": "Extract Form Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Form Data": {
+      "main": [[{ "node": "Build Request", "type": "main", "index": 0 }]]
+    },
+    "Build Request": {
+      "main": [[{ "node": "Call Internal API", "type": "main", "index": 0 }]]
+    },
+    "Call Internal API": {
+      "main": [[{ "node": "Format Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

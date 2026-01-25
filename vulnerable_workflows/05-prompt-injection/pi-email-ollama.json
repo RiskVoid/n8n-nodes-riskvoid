@@ -1,0 +1,96 @@
+{
+  "id": "vuln-pi-003",
+  "name": "PI - Email to Ollama No Isolation",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Email Trigger",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "mailbox": "INBOX",
+        "postProcessAction": "mark"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Email Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "subject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "body",
+              "value": "={{ $json.textPlain }}"
+            },
+            {
+              "name": "from",
+              "value": "={{ $json.from.address }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Prepare Analysis",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "promptText",
+              "value": "Summarize this email from {{ $json.from }}: {{ $json.body }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Ollama Analysis",
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "model": "llama3",
+        "prompt": "={{ $json.promptText }}"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Save to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO email_summaries (subject, summary) VALUES ('{{ $('Extract Email Content').item.json.subject }}', '{{ $json.response }}')"
+      }
+    }
+  ],
+  "connections": {
+    "Email Trigger": {
+      "main": [[{ "node": "Extract Email Content", "type": "main", "index": 0 }]]
+    },
+    "Extract Email Content": {
+      "main": [[{ "node": "Prepare Analysis", "type": "main", "index": 0 }]]
+    },
+    "Prepare Analysis": {
+      "main": [[{ "node": "Ollama Analysis", "type": "main", "index": 0 }]]
+    },
+    "Ollama Analysis": {
+      "main": [[{ "node": "Save to Database", "type": "main", "index": 0 }]]
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "id": "edge-001",
+  "name": "Edge Case - Disconnected Vulnerable Code Node",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/api/data",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Safe Set Node",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "safeValue",
+              "value": "={{ $json.body.message }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Safe Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Disconnected Vulnerable Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [250, 250],
+      "parameters": {
+        "jsCode": "// This node is disconnected but contains vulnerable code\nconst userInput = '{{ $json.body.command }}';\nconst result = eval(userInput);\nreturn [{json: {result}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Safe Set Node", "type": "main", "index": 0 }]]
+    },
+    "Safe Set Node": {
+      "main": [[{ "node": "Safe Response", "type": "main", "index": 0 }]]
+    }
+  }
+}

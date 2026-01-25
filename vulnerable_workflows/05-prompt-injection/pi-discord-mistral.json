@@ -1,0 +1,117 @@
+{
+  "id": "vuln-pi-006",
+  "name": "PI - Discord to Mistral Cloud",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Discord Trigger",
+      "type": "n8n-nodes-base.discordTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "events": ["messageCreate"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Discord Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "content",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "author",
+              "value": "={{ $json.author.username }}"
+            },
+            {
+              "name": "channelId",
+              "value": "={{ $json.channelId }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Transform Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "intermediateData",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Build AI Prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fullPrompt",
+              "value": "You are a Discord bot. Respond to: {{ $json.intermediateData }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Mistral AI",
+      "type": "@n8n/n8n-nodes-langchain.mistralCloud",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "model": "mistral-large-latest",
+        "prompt": "={{ $json.fullPrompt }}"
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Send Discord Reply",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "channelId": "={{ $('Extract Discord Message').item.json.channelId }}",
+        "content": "={{ $json.response }}"
+      }
+    }
+  ],
+  "connections": {
+    "Discord Trigger": {
+      "main": [[{ "node": "Extract Discord Message", "type": "main", "index": 0 }]]
+    },
+    "Extract Discord Message": {
+      "main": [[{ "node": "Transform Message", "type": "main", "index": 0 }]]
+    },
+    "Transform Message": {
+      "main": [[{ "node": "Build AI Prompt", "type": "main", "index": 0 }]]
+    },
+    "Build AI Prompt": {
+      "main": [[{ "node": "Mistral AI", "type": "main", "index": 0 }]]
+    },
+    "Mistral AI": {
+      "main": [[{ "node": "Send Discord Reply", "type": "main", "index": 0 }]]
+    }
+  }
+}

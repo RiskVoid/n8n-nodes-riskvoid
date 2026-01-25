@@ -1,0 +1,150 @@
+{
+  "id": "vuln-ssrf-006",
+  "name": "SSRF - DiscordTrigger to HTTP Request (GCP Metadata)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Discord Webhook",
+      "type": "n8n-nodes-base.discordTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "events": ["message"]
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Discord Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "content",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "author",
+              "value": "={{ $json.author.username }}"
+            },
+            {
+              "name": "channelId",
+              "value": "={{ $json.channel_id }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Parse URL from Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "extractedUrl",
+              "value": "={{ $json.content.split('!probe ')[1] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Build GCP Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "gcpUrl",
+              "value": "={{ $json.extractedUrl }}"
+            },
+            {
+              "name": "requestTime",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Query GCP Metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "url": "={{ $json.gcpUrl }}",
+        "method": "GET",
+        "options": {
+          "headers": {
+            "Metadata-Flavor": "Google"
+          },
+          "timeout": 3000
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Process Metadata",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "metadata",
+              "value": "={{ JSON.stringify($json) }}"
+            },
+            {
+              "name": "status",
+              "value": "fetched"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Send Discord Reply",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 1,
+      "position": [1500, 0],
+      "parameters": {
+        "operation": "sendMessage",
+        "channelId": "={{ $('Extract Discord Data').item.json.channelId }}",
+        "content": "Metadata: {{ $json.metadata }}"
+      }
+    }
+  ],
+  "connections": {
+    "Discord Webhook": {
+      "main": [[{ "node": "Extract Discord Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Discord Data": {
+      "main": [[{ "node": "Parse URL from Message", "type": "main", "index": 0 }]]
+    },
+    "Parse URL from Message": {
+      "main": [[{ "node": "Build GCP Request", "type": "main", "index": 0 }]]
+    },
+    "Build GCP Request": {
+      "main": [[{ "node": "Query GCP Metadata", "type": "main", "index": 0 }]]
+    },
+    "Query GCP Metadata": {
+      "main": [[{ "node": "Process Metadata", "type": "main", "index": 0 }]]
+    },
+    "Process Metadata": {
+      "main": [[{ "node": "Send Discord Reply", "type": "main", "index": 0 }]]
+    }
+  }
+}

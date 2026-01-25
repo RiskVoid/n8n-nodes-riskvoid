@@ -1,0 +1,147 @@
+{
+  "id": "vuln-sqli-002",
+  "name": "SQLi - Form Trigger to Postgres with raw INSERT",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Registration Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {
+        "path": "/register",
+        "formTitle": "User Registration",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Username",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Bio",
+              "fieldType": "textarea",
+              "requiredField": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Extract Form Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "username",
+              "value": "={{ $json.data.username }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $json.data.email }}"
+            },
+            {
+              "name": "bio",
+              "value": "={{ $json.data.bio }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Generate Timestamp",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "created_at",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Build Insert Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "insertQuery",
+              "value": "INSERT INTO users (username, email, bio, created_at) VALUES ('{{ $json.username }}', '{{ $json.email }}', '{{ $json.bio }}', '{{ $json.created_at }}')"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Save to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1000, 0],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.insertQuery }}"
+      },
+      "credentials": {
+        "postgres": {
+          "id": "2",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "User registered successfully"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Registration Form": {
+      "main": [[{ "node": "Extract Form Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Form Data": {
+      "main": [[{ "node": "Generate Timestamp", "type": "main", "index": 0 }]]
+    },
+    "Generate Timestamp": {
+      "main": [[{ "node": "Build Insert Query", "type": "main", "index": 0 }]]
+    },
+    "Build Insert Query": {
+      "main": [[{ "node": "Save to Database", "type": "main", "index": 0 }]]
+    },
+    "Save to Database": {
+      "main": [[{ "node": "Success Response", "type": "main", "index": 0 }]]
+    }
+  }
+}
