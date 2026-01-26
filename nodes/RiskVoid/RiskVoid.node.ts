@@ -34,7 +34,7 @@ async function fetchWorkflowById(
 	executeFunctions: IExecuteFunctions,
 	workflowId: string,
 ): Promise<unknown> {
-	const credentials = await executeFunctions.getCredentials('n8nApi');
+	const credentials = await executeFunctions.getCredentials('riskVoidN8nApi');
 
 	// Determine base URL
 	let baseUrl = credentials.baseUrl as string;
