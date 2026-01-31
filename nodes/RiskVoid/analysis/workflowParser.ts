@@ -7,7 +7,11 @@ import type {
 	N8nNode,
 	N8nConnections,
 	WorkflowMetadata,
+	ParsedWorkflow,
 } from '../types';
+
+// Re-export for backwards compatibility
+export type { ParsedWorkflow } from '../types';
 
 /**
  * Result of parsing a workflow
@@ -17,21 +21,6 @@ export interface ParseResult {
 	workflow?: ParsedWorkflow;
 	errors: ParseError[];
 	warnings: ParseWarning[];
-}
-
-/**
- * Parsed workflow with additional computed properties
- */
-export interface ParsedWorkflow {
-	id: string;
-	name: string;
-	nodes: Map<string, N8nNode>;
-	nodesByType: Map<string, N8nNode[]>;
-	connections: N8nConnections;
-	nodeCount: number;
-	connectionCount: number;
-	metadata: WorkflowMetadata;
-	raw: N8nWorkflow;
 }
 
 /**

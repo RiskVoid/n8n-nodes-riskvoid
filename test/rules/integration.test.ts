@@ -94,9 +94,9 @@ describe('Rule Framework Integration', () => {
 	}
 
 	describe('Built-in rules registration', () => {
-		it('should register all 6 built-in rules', () => {
+		it('should register all 7 built-in rules', () => {
 			const rules = getAllRules();
-			expect(rules).toHaveLength(6);
+			expect(rules).toHaveLength(7);
 
 			const ruleIds = rules.map((r) => r.metadata.id);
 			expect(ruleIds).toContain('RV-RCE-001');
@@ -105,6 +105,7 @@ describe('Rule Framework Integration', () => {
 			expect(ruleIds).toContain('RV-SSRF-001');
 			expect(ruleIds).toContain('RV-PI-001');
 			expect(ruleIds).toContain('RV-CRED-001');
+			expect(ruleIds).toContain('RV-XSS-001');
 		});
 	});
 
@@ -587,7 +588,7 @@ describe('Rule Framework Integration', () => {
 			const result = runAllRules(context);
 
 			// All rules should be skipped (not applicable) for empty workflow
-			expect(result.rulesRun + result.rulesSkipped).toBe(6);
+			expect(result.rulesRun + result.rulesSkipped).toBe(7);
 		});
 
 		it('should track duration', () => {

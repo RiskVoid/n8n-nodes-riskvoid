@@ -25,6 +25,7 @@ import { SqlInjectionRule } from './sqlInjection';
 import { SsrfRule } from './ssrf';
 import { PromptInjectionRule } from './promptInjection';
 import { CredentialExposureRule } from './credentialExposure';
+import { XssRule } from './xss';
 
 /**
  * Registry of all detection rules
@@ -321,6 +322,7 @@ export function initializeBuiltInRules(): void {
 	registerRule(new SsrfRule());
 	registerRule(new PromptInjectionRule());
 	registerRule(new CredentialExposureRule());
+	registerRule(new XssRule());
 }
 
 // Export rule classes for direct use
@@ -330,6 +332,7 @@ export { SqlInjectionRule } from './sqlInjection';
 export { SsrfRule } from './ssrf';
 export { PromptInjectionRule } from './promptInjection';
 export { CredentialExposureRule } from './credentialExposure';
+export { XssRule } from './xss';
 
 /**
  * Clear all registered rules (useful for testing)

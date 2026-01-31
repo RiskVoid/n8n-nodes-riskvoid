@@ -157,6 +157,7 @@ const SEVERITY_TO_SARIF_LEVEL: Record<FindingSeverity, 'error' | 'warning' | 'no
 const CATEGORY_LABELS: Record<FindingCategory, string> = {
 	injection: 'Code/Command Injection',
 	ssrf: 'Server-Side Request Forgery',
+	xss: 'Cross-Site Scripting',
 	'credential-exposure': 'Credential Exposure',
 	'prompt-injection': 'Prompt Injection',
 	configuration: 'Security Misconfiguration',

@@ -3,7 +3,7 @@
  */
 
 import type { TaintPath, TaintSource, SecuritySink } from '../types/taint';
-import type { ParsedWorkflow } from '../analysis/workflowParser';
+import type { ParsedWorkflow } from '../types/workflow';
 import type { WorkflowGraph } from '../types/graph';
 
 /**
@@ -12,6 +12,7 @@ import type { WorkflowGraph } from '../types/graph';
 export type FindingCategory =
 	| 'injection'
 	| 'ssrf'
+	| 'xss'
 	| 'credential-exposure'
 	| 'prompt-injection'
 	| 'configuration'

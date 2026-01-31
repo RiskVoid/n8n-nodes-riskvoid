@@ -136,7 +136,7 @@ const SINK_NODES: Record<string, Omit<SinkClassification, 'role'>> = {
 	},
 	'n8n-nodes-base.ssh': {
 		severity: 'critical',
-		riskType: 'RCE',
+		riskType: 'Command Injection',
 		dangerousParams: ['command'],
 		description: 'Executes commands via SSH',
 	},
@@ -177,6 +177,42 @@ const SINK_NODES: Record<string, Omit<SinkClassification, 'role'>> = {
 		riskType: 'NoSQL Injection',
 		dangerousParams: ['query', 'options.query'],
 		description: 'Executes MongoDB queries',
+	},
+	'n8n-nodes-base.mariadb': {
+		severity: 'high',
+		riskType: 'SQL Injection',
+		dangerousParams: ['query'],
+		description: 'Executes MariaDB queries',
+	},
+	'n8n-nodes-base.oracledb': {
+		severity: 'high',
+		riskType: 'SQL Injection',
+		dangerousParams: ['query'],
+		description: 'Executes Oracle database queries',
+	},
+	'n8n-nodes-base.snowflake': {
+		severity: 'high',
+		riskType: 'SQL Injection',
+		dangerousParams: ['query'],
+		description: 'Executes Snowflake queries',
+	},
+	'n8n-nodes-base.questDb': {
+		severity: 'high',
+		riskType: 'SQL Injection',
+		dangerousParams: ['query'],
+		description: 'Executes QuestDB queries',
+	},
+	'n8n-nodes-base.timescaleDb': {
+		severity: 'high',
+		riskType: 'SQL Injection',
+		dangerousParams: ['query'],
+		description: 'Executes TimescaleDB queries',
+	},
+	'n8n-nodes-base.cockroachDb': {
+		severity: 'high',
+		riskType: 'SQL Injection',
+		dangerousParams: ['query'],
+		description: 'Executes CockroachDB queries',
 	},
 
 	// Network requests (High - SSRF)

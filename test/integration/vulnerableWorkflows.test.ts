@@ -823,13 +823,12 @@ describe('Vulnerable Workflows Integration Tests', () => {
 			const workflow = loadWorkflow('08-multi-sink-coverage/sink-ssh-command.json');
 			const { findings, duration } = analyzeAndGetFindings(workflow);
 
-			// TODO: SSH sink may need classifier updates
-			if (findings.length > 0) {
-				testStats.truePositives++;
-			} else {
-				testStats.falseNegatives++;
-			}
+			expect(findings.length).toBeGreaterThanOrEqual(1);
+			const cmdiFinding = findings.find((f) => f.ruleId === 'RV-CMDI-001');
+			expect(cmdiFinding).toBeDefined();
+			assertFinding(cmdiFinding!, 'RV-CMDI-001', 'critical', 'high');
 			expect(duration).toBeLessThan(500);
+			testStats.truePositives++;
 			testStats.totalDuration += duration;
 		});
 
@@ -837,13 +836,12 @@ describe('Vulnerable Workflows Integration Tests', () => {
 			const workflow = loadWorkflow('08-multi-sink-coverage/sink-function-node.json');
 			const { findings, duration } = analyzeAndGetFindings(workflow);
 
-			// TODO: Function node sink may need classifier updates
-			if (findings.length > 0) {
-				testStats.truePositives++;
-			} else {
-				testStats.falseNegatives++;
-			}
+			expect(findings.length).toBeGreaterThanOrEqual(1);
+			const rceFinding = findings.find((f) => f.ruleId === 'RV-RCE-001');
+			expect(rceFinding).toBeDefined();
+			assertFinding(rceFinding!, 'RV-RCE-001', 'critical', 'high');
 			expect(duration).toBeLessThan(500);
+			testStats.truePositives++;
 			testStats.totalDuration += duration;
 		});
 
@@ -851,13 +849,12 @@ describe('Vulnerable Workflows Integration Tests', () => {
 			const workflow = loadWorkflow('08-multi-sink-coverage/sink-function-item.json');
 			const { findings, duration } = analyzeAndGetFindings(workflow);
 
-			// TODO: Function Item sink may need classifier updates
-			if (findings.length > 0) {
-				testStats.truePositives++;
-			} else {
-				testStats.falseNegatives++;
-			}
+			expect(findings.length).toBeGreaterThanOrEqual(1);
+			const rceFinding = findings.find((f) => f.ruleId === 'RV-RCE-001');
+			expect(rceFinding).toBeDefined();
+			assertFinding(rceFinding!, 'RV-RCE-001', 'critical', 'high');
 			expect(duration).toBeLessThan(500);
+			testStats.truePositives++;
 			testStats.totalDuration += duration;
 		});
 
@@ -865,13 +862,12 @@ describe('Vulnerable Workflows Integration Tests', () => {
 			const workflow = loadWorkflow('08-multi-sink-coverage/sink-mariadb.json');
 			const { findings, duration } = analyzeAndGetFindings(workflow);
 
-			// TODO: MariaDB sink may need classifier updates
-			if (findings.length > 0) {
-				testStats.truePositives++;
-			} else {
-				testStats.falseNegatives++;
-			}
+			expect(findings.length).toBeGreaterThanOrEqual(1);
+			const sqliFinding = findings.find((f) => f.ruleId === 'RV-SQLI-001');
+			expect(sqliFinding).toBeDefined();
+			assertFinding(sqliFinding!, 'RV-SQLI-001', 'high', 'high');
 			expect(duration).toBeLessThan(500);
+			testStats.truePositives++;
 			testStats.totalDuration += duration;
 		});
 
@@ -879,13 +875,12 @@ describe('Vulnerable Workflows Integration Tests', () => {
 			const workflow = loadWorkflow('08-multi-sink-coverage/sink-oracle.json');
 			const { findings, duration } = analyzeAndGetFindings(workflow);
 
-			// TODO: Oracle sink may need classifier updates
-			if (findings.length > 0) {
-				testStats.truePositives++;
-			} else {
-				testStats.falseNegatives++;
-			}
+			expect(findings.length).toBeGreaterThanOrEqual(1);
+			const sqliFinding = findings.find((f) => f.ruleId === 'RV-SQLI-001');
+			expect(sqliFinding).toBeDefined();
+			assertFinding(sqliFinding!, 'RV-SQLI-001', 'high', 'high');
 			expect(duration).toBeLessThan(500);
+			testStats.truePositives++;
 			testStats.totalDuration += duration;
 		});
 
@@ -893,13 +888,12 @@ describe('Vulnerable Workflows Integration Tests', () => {
 			const workflow = loadWorkflow('08-multi-sink-coverage/sink-respond-webhook.json');
 			const { findings, duration } = analyzeAndGetFindings(workflow);
 
-			// TODO: Respond to Webhook sink may need classifier updates
-			if (findings.length > 0) {
-				testStats.truePositives++;
-			} else {
-				testStats.falseNegatives++;
-			}
+			expect(findings.length).toBeGreaterThanOrEqual(1);
+			const xssFinding = findings.find((f) => f.ruleId === 'RV-XSS-001');
+			expect(xssFinding).toBeDefined();
+			assertFinding(xssFinding!, 'RV-XSS-001', 'medium', 'medium');
 			expect(duration).toBeLessThan(500);
+			testStats.truePositives++;
 			testStats.totalDuration += duration;
 		});
 	});
