@@ -390,9 +390,9 @@ function traceBackToSource(
 			if (values) {
 				// v2 format: Iterate over all assignments (string, number, boolean, etc)
 				const assignments: { name: string; value: string }[] = [];
-				if (Array.isArray(values.string)) assignments.push(...values.string as any);
-				if (Array.isArray(values.number)) assignments.push(...values.number as any);
-				if (Array.isArray(values.boolean)) assignments.push(...values.boolean as any);
+				if (Array.isArray(values.string)) assignments.push(...(values.string as { name: string; value: string }[]));
+				if (Array.isArray(values.number)) assignments.push(...(values.number as { name: string; value: string }[]));
+				if (Array.isArray(values.boolean)) assignments.push(...(values.boolean as { name: string; value: string }[]));
 
 				for (const assign of assignments) {
 					const targetName = assign.name;

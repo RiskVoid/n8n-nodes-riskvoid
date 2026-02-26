@@ -9,7 +9,7 @@ jest.mock('../../nodes/RiskVoid/analysis/nodeClassifier', () => {
     const original = jest.requireActual('../../nodes/RiskVoid/analysis/nodeClassifier');
     return {
         ...original,
-        classifyNode: (node: any) => {
+        classifyNode: (node: Record<string, unknown>) => {
             if (node.name === 'SQL Sanitizer') {
                 return {
                     role: 'sanitizer',
