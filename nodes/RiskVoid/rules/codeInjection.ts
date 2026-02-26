@@ -21,6 +21,15 @@ import { createFindingId, getEffectiveSeverity } from './types';
 import type { TaintPath } from '../types/taint';
 
 /**
+ * Node types that execute code (RCE sinks)
+ */
+const CODE_EXECUTION_NODE_TYPES = [
+	'n8n-nodes-base.code',
+	'n8n-nodes-base.function',
+	'n8n-nodes-base.functionItem',
+];
+
+/**
  * Dangerous code execution patterns in JavaScript/Python
  */
 const DANGEROUS_PATTERNS = [
@@ -70,15 +79,12 @@ export class CodeInjectionRule implements DetectionRule {
 	 * Check if this rule is applicable to the workflow
 	 */
 	isApplicable(context: RuleContext): boolean {
-		// Rule is applicable if there are any Code nodes in the workflow
-		// (either as sinks or potentially dangerous nodes)
-		const hasCodeSinks = context.sinks.some(
-			(sink) => sink.riskType === 'RCE' && sink.nodeType === 'n8n-nodes-base.code',
+		// Rule is applicable if there are any RCE sinks in the workflow
+		const hasRceSinks = context.sinks.some((sink) => sink.riskType === 'RCE');
+		const hasCodeExecutionNodes = Array.from(context.workflow.nodes.values()).some((node) =>
+			CODE_EXECUTION_NODE_TYPES.includes(node.type),
 		);
-		const hasCodeNodes = Array.from(context.workflow.nodes.values()).some(
-			(node) => node.type === 'n8n-nodes-base.code',
-		);
-		return hasCodeSinks || hasCodeNodes;
+		return hasRceSinks || hasCodeExecutionNodes;
 	}
 
 	/**
@@ -87,21 +93,16 @@ export class CodeInjectionRule implements DetectionRule {
 	detect(context: RuleContext): Finding[] {
 		const findings: Finding[] = [];
 
-		// Get taint paths that flow to Code nodes
-		const rcePaths = context.taintPaths.filter(
-			(path) => path.sink.riskType === 'RCE' && path.sink.nodeType === 'n8n-nodes-base.code',
-		);
+		// Get taint paths that flow to any RCE sink (Code, Function, FunctionItem)
+		const rcePaths = context.taintPaths.filter((path) => path.sink.riskType === 'RCE');
 
 		for (const taintPath of rcePaths) {
-			// Get the Code node to analyze its content
+			// Get the sink node to analyze its content
 			const sinkNode = context.workflow.nodes.get(taintPath.sink.nodeName);
 			if (!sinkNode) continue;
 
-			// Get the code content
-			const jsCode = sinkNode.parameters.jsCode as string | undefined;
-			const pythonCode = sinkNode.parameters.pythonCode as string | undefined;
-			const codeContent = jsCode || pythonCode || '';
-			const codeLanguage = jsCode ? 'JavaScript' : pythonCode ? 'Python' : 'unknown';
+			// Get the code content (different parameter names for different node types)
+			const { codeContent, codeLanguage } = this.extractCodeContent(sinkNode);
 
 			// Detect dangerous patterns in the code
 			const detectedPatterns = this.findDangerousPatterns(codeContent);
@@ -113,7 +114,7 @@ export class CodeInjectionRule implements DetectionRule {
 			findings.push(this.createFinding(taintPath, detectedPatterns, confidence, codeLanguage));
 		}
 
-		// Also check Code nodes that use dangerous patterns with $input/$json
+		// Also check code execution nodes that use dangerous patterns with $input/$json
 		// even if there's no explicit untrusted source (potential vulnerability)
 		this.detectPotentialVulnerabilities(context, findings);
 
@@ -121,21 +122,45 @@ export class CodeInjectionRule implements DetectionRule {
 	}
 
 	/**
-	 * Detect Code nodes that use dangerous patterns with input data
+	 * Extract code content from a node (handles Code, Function, FunctionItem)
+	 */
+	private extractCodeContent(node: { type: string; parameters: Record<string, unknown> }): {
+		codeContent: string;
+		codeLanguage: string;
+	} {
+		// Code node uses jsCode or pythonCode
+		const jsCode = node.parameters.jsCode as string | undefined;
+		const pythonCode = node.parameters.pythonCode as string | undefined;
+		// Function and FunctionItem nodes use functionCode
+		const functionCode = node.parameters.functionCode as string | undefined;
+
+		const codeContent = jsCode || pythonCode || functionCode || '';
+		const codeLanguage = pythonCode ? 'Python' : 'JavaScript';
+
+		return { codeContent, codeLanguage };
+	}
+
+	/**
+	 * Detect code execution nodes that use dangerous patterns with input data
 	 * These are potential vulnerabilities even without an untrusted source
 	 */
 	private detectPotentialVulnerabilities(context: RuleContext, findings: Finding[]): void {
-		// Get Code nodes that weren't already flagged
-		const flaggedNodes = new Set(findings.map(f => f.sink.node));
+		// Get nodes that weren't already flagged
+		const flaggedNodes = new Set(findings.map((f) => f.sink.node));
 
 		for (const [nodeName, node] of context.workflow.nodes) {
-			if (node.type !== 'n8n-nodes-base.code') continue;
+			// Check all code execution node types (Code, Function, FunctionItem)
+			if (!CODE_EXECUTION_NODE_TYPES.includes(node.type)) continue;
 			if (flaggedNodes.has(nodeName)) continue;
 
-			const jsCode = node.parameters.jsCode as string | undefined;
-			const pythonCode = node.parameters.pythonCode as string | undefined;
-			const codeContent = jsCode || pythonCode || '';
-			const codeLanguage = jsCode ? 'JavaScript' : pythonCode ? 'Python' : 'unknown';
+			// Skip disabled nodes
+			if (node.disabled) continue;
+
+			// Skip disconnected nodes (in the graph but no predecessors = no data flows to them)
+			const graphNode = context.graph.nodes.get(nodeName);
+			if (graphNode && graphNode.predecessors.length === 0) continue;
+
+			const { codeContent, codeLanguage } = this.extractCodeContent(node);
 
 			// Check if code uses dangerous patterns
 			const detectedPatterns = this.findDangerousPatterns(codeContent);
@@ -148,6 +173,16 @@ export class CodeInjectionRule implements DetectionRule {
 			// This is a potential vulnerability - dangerous pattern + input data usage
 			findings.push(this.createPotentialFinding(nodeName, node, detectedPatterns, codeLanguage, context));
 		}
+	}
+
+	/**
+	 * Get the code parameter name based on node type and language
+	 */
+	private getCodeParameterName(nodeType: string, codeLanguage: string): string {
+		if (nodeType === 'n8n-nodes-base.function' || nodeType === 'n8n-nodes-base.functionItem') {
+			return 'functionCode';
+		}
+		return codeLanguage === 'Python' ? 'pythonCode' : 'jsCode';
 	}
 
 	/**
@@ -197,7 +232,7 @@ export class CodeInjectionRule implements DetectionRule {
 			sink: {
 				node: nodeName,
 				nodeType: node.type,
-				parameter: codeLanguage === 'Python' ? 'pythonCode' : 'jsCode',
+				parameter: this.getCodeParameterName(node.type, codeLanguage),
 				dangerousExpression: patterns[0],
 			},
 			path: predecessors.length > 0 ? [sourceNode, nodeName] : [nodeName],

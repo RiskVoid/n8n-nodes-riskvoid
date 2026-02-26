@@ -229,7 +229,7 @@ describe('PromptInjectionRule', () => {
 			expect(findings[0].metadata.isHighRisk).toBe(true);
 		});
 
-		it('should detect XML-style tag protection', () => {
+		it('should suppress findings when XML-style tag protection is present', () => {
 			const llmNode = createOpenAiNode(
 				'OpenAI',
 				'Answer the user query:\n<user_input>{{ $json.query }}</user_input>',
@@ -239,13 +239,11 @@ describe('PromptInjectionRule', () => {
 
 			const findings = rule.detect(context);
 
-			expect(findings).toHaveLength(1);
-			expect(findings[0].metadata.hasProtection).toBe(true);
-			expect(findings[0].metadata.protectionPatterns).toContain('XML input tags');
-			expect(findings[0].severity).toBe('low');
+			// Protection detected → finding suppressed entirely
+			expect(findings).toHaveLength(0);
 		});
 
-		it('should detect code block protection', () => {
+		it('should suppress findings when code block protection is present', () => {
 			const llmNode = createOpenAiNode(
 				'OpenAI',
 				'Analyze this code:\n```\n{{ $json.code }}\n```',
@@ -255,12 +253,11 @@ describe('PromptInjectionRule', () => {
 
 			const findings = rule.detect(context);
 
-			expect(findings).toHaveLength(1);
-			expect(findings[0].metadata.hasProtection).toBe(true);
-			expect(findings[0].metadata.protectionPatterns).toContain('code block delimiters');
+			// Protection detected → finding suppressed entirely
+			expect(findings).toHaveLength(0);
 		});
 
-		it('should detect bracket marker protection', () => {
+		it('should suppress findings when bracket marker protection is present', () => {
 			const llmNode = createOpenAiNode(
 				'OpenAI',
 				'Process this:\n[USER_INPUT]\n{{ $json.text }}\n[END]',
@@ -270,9 +267,8 @@ describe('PromptInjectionRule', () => {
 
 			const findings = rule.detect(context);
 
-			expect(findings).toHaveLength(1);
-			expect(findings[0].metadata.hasProtection).toBe(true);
-			expect(findings[0].metadata.protectionPatterns).toContain('bracket markers');
+			// Protection detected → finding suppressed entirely
+			expect(findings).toHaveLength(0);
 		});
 
 		it('should work with Anthropic nodes', () => {
@@ -294,7 +290,7 @@ describe('PromptInjectionRule', () => {
 			expect(findings[0].metadata.llmProvider).toBe('Anthropic');
 		});
 
-		it('should reduce confidence when protection is present', () => {
+		it('should suppress findings when protection is present', () => {
 			const llmNode = createOpenAiNode(
 				'OpenAI',
 				'<user_message>{{ $json.msg }}</user_message>',
@@ -304,8 +300,8 @@ describe('PromptInjectionRule', () => {
 
 			const findings = rule.detect(context);
 
-			expect(findings).toHaveLength(1);
-			expect(findings[0].confidence).toBe('low');
+			// Protection detected → finding suppressed entirely
+			expect(findings).toHaveLength(0);
 		});
 
 		it('should have medium confidence without protection', () => {
@@ -365,7 +361,7 @@ describe('PromptInjectionRule', () => {
 			expect(findings[0].path).toEqual(['Webhook', 'Set', 'OpenAI']);
 		});
 
-		it('should detect separator line protection', () => {
+		it('should suppress findings when separator line protection is present', () => {
 			const llmNode = createOpenAiNode(
 				'OpenAI',
 				'Instructions above\n---\n{{ $json.input }}\n---\nInstructions below',
@@ -375,9 +371,8 @@ describe('PromptInjectionRule', () => {
 
 			const findings = rule.detect(context);
 
-			expect(findings).toHaveLength(1);
-			expect(findings[0].metadata.hasProtection).toBe(true);
-			expect(findings[0].metadata.protectionPatterns).toContain('separator lines');
+			// Protection detected → finding suppressed entirely
+			expect(findings).toHaveLength(0);
 		});
 	});
 });

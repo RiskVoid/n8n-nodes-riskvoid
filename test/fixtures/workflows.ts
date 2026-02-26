@@ -806,9 +806,9 @@ export const complexVulnerableWorkflow: N8nWorkflow = {
 			parameters: {
 				values: {
 					string: [
-						{ name: 'command', value: '={{ $json.cmd }}' },
-						{ name: 'query', value: '={{ $json.search }}' },
-						{ name: 'url', value: '={{ $json.endpoint }}' },
+						{ name: 'command', value: '={{ $json.body.cmd }}' },
+						{ name: 'query', value: '={{ $json.body.search }}' },
+						{ name: 'url', value: '={{ $json.body.endpoint }}' },
 					],
 				},
 			},

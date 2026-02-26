@@ -17,6 +17,10 @@ export function buildGraph(workflow: ParsedWorkflow): WorkflowGraph {
 
 	// Initialize graph nodes from workflow nodes
 	for (const [name, node] of workflow.nodes) {
+		if (node.disabled) {
+			continue;
+		}
+
 		nodes.set(name, {
 			name,
 			type: node.type,

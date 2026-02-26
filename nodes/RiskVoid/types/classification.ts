@@ -52,6 +52,8 @@ export interface SanitizerClassification {
 	role: 'sanitizer';
 	/** Type of sanitization performed */
 	sanitizerType: 'validation' | 'transformation' | 'conditional';
+	/** Specific risk types this sanitizer addresses (e.g. ['SQL Injection']). If undefined or includes '*', addresses all. */
+	validatesAgainst?: string[];
 	/** Human-readable description */
 	description: string;
 }

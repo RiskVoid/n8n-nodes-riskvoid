@@ -90,8 +90,10 @@ export class SsrfRule implements DetectionRule {
 	detect(context: RuleContext): Finding[] {
 		const findings: Finding[] = [];
 
-		// Get taint paths that flow to HTTP Request nodes
-		const ssrfPaths = context.taintPaths.filter((path) => path.sink.riskType === 'SSRF');
+		// Get taint paths that flow to HTTP Request nodes, excluding fully sanitized paths
+		const ssrfPaths = context.taintPaths.filter(
+			(path) => path.sink.riskType === 'SSRF' && !path.sanitized,
+		);
 
 		for (const taintPath of ssrfPaths) {
 			// Get the sink node to analyze URL content

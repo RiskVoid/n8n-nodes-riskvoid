@@ -95,3 +95,18 @@ export interface WorkflowMetadata {
 	usesCredentials: boolean;
 	credentialTypes: string[];
 }
+
+/**
+ * Parsed workflow with additional computed properties
+ */
+export interface ParsedWorkflow {
+	id: string;
+	name: string;
+	nodes: Map<string, N8nNode>;
+	nodesByType: Map<string, N8nNode[]>;
+	connections: N8nConnections;
+	nodeCount: number;
+	connectionCount: number;
+	metadata: WorkflowMetadata;
+	raw: N8nWorkflow;
+}

@@ -300,15 +300,15 @@ describe('SsrfRule', () => {
 			expect(findings[0].metadata.bypassPatterns).toContain('gopher:// protocol');
 		});
 
-		it('should reduce severity when sanitizers are present', () => {
+		it('should suppress findings when path is fully sanitized', () => {
 			const httpNode = createHttpNode('HTTP', '{{ $json.url }}');
 			const taintPath = createTaintPath('Webhook', 'HTTP', true); // sanitized
 			const context = createMockContext([httpNode], [taintPath], [createSsrfSink('HTTP')]);
 
 			const findings = rule.detect(context);
 
-			expect(findings).toHaveLength(1);
-			expect(findings[0].severity).toBe('medium'); // reduced from high
+			// Sanitized paths are filtered out entirely
+			expect(findings).toHaveLength(0);
 		});
 
 		it('should include cloud metadata warning in description', () => {

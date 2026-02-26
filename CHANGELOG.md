@@ -9,13 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Enhanced taint path value resolution
-- Additional sink node types (SSH, Function, MariaDB, Oracle)
 - Improved SQL injection detection for parameterized queries
 - SSRF bypass pattern detection (URL encoding, IPv6)
 - Python code injection pattern enhancements
 - Conventional commits enforcement
 - Automated changelog generation
+
+## [1.2.0] - 2026-02-26
+
+### Added
+
+- **XSS Detection Rule** (RV-XSS-001) - Detects untrusted input flowing to HTML rendering sinks (`html`, `respondToWebhook`)
+- **Prototype Pollution Detection Rule** (RV-PP-001) - Detects data flow to object property manipulation operations
+- **Expanded Database Sink Coverage** - MariaDB, Oracle, Snowflake, CockroachDB, QuestDB, TimescaleDB, Microsoft SQL Server
+- **Expanded LLM Provider Detection** - Ollama, Mistral, Groq, Azure OpenAI, Google PaLM prompt injection detection
+- **Configuration-Driven Node Classification** - Node definitions externalized to JSON for easier maintenance
+
+### Fixed
+
+- Reduced false positives with field-level taint propagation through transform nodes
+- Disabled nodes are now skipped during graph building
+- Removed self-referencing runtime dependency blocking community node review
+
+### Changed
+
+- Improved taint analysis accuracy with data dependency tracking through Set/transform nodes
+- Enhanced detection for `function` and `functionItem` legacy code nodes
 
 ## [1.1.1] - 2026-01-26
 
@@ -133,7 +152,8 @@ First public release of RiskVoid Security Scanner for n8n workflows.
 
 ---
 
-[unreleased]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.1.1...HEAD
+[unreleased]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/releases/tag/v1.0.0

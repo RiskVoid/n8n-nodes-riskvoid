@@ -168,13 +168,13 @@ export class SqlInjectionRule implements DetectionRule {
 			'n8n-nodes-base.mySql': 'MySQL',
 			'n8n-nodes-base.postgres': 'PostgreSQL',
 			'n8n-nodes-base.microsoftSql': 'Microsoft SQL Server',
-			'n8n-nodes-base.mariaDb': 'MariaDB',
-			'n8n-nodes-base.oracleDb': 'Oracle',
+			'n8n-nodes-base.mariadb': 'MariaDB',
+			'n8n-nodes-base.oracledb': 'Oracle',
 			'n8n-nodes-base.snowflake': 'Snowflake',
 			'n8n-nodes-base.questDb': 'QuestDB',
 			'n8n-nodes-base.timescaleDb': 'TimescaleDB',
 			'n8n-nodes-base.cockroachDb': 'CockroachDB',
-			'n8n-nodes-base.mongodb': 'MongoDB',
+			'n8n-nodes-base.mongoDb': 'MongoDB',
 		};
 
 		return typeMap[nodeType] || 'SQL database';
