@@ -10,7 +10,6 @@
 
 - **[Quick Start Guide](docs/QUICK-START.md)** - Get started in 5 minutes
 - **[Complete User Guide](docs/USER-GUIDE.md)** - Comprehensive documentation with examples
-- **[Architecture Overview](docs/00-POC-OVERVIEW.md)** - Technical deep-dive
 
 ## What is RiskVoid?
 
@@ -212,7 +211,7 @@ Generate standalone HTML reports with Mermaid.js workflow diagrams.
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! Please open an issue or pull request on [GitHub](https://github.com/RiskVoid/n8n-nodes-riskvoid).
 
 ### Development
 
