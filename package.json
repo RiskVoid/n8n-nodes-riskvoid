@@ -34,6 +34,8 @@
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"test:coverage": "jest --coverage",
+		"test:audit": "jest test/audit --verbose",
+		"test:workflows": "jest test/integration/workflows --verbose",
 		"release": "n8n-node release"
 	},
 	"files": [
