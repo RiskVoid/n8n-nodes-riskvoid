@@ -49,6 +49,6 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref_name }}
           body: |
-            See [CHANGELOG.md](https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/blob/main/CHANGELOG.md) for details.
+            See [CHANGELOG.md](https://github.com/RiskVoid/n8n-nodes-riskvoid/blob/main/CHANGELOG.md) for details.
           draft: false
           prerelease: false
