@@ -43,15 +43,33 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Extract the section for this version from CHANGELOG.md
+          NOTES=$(awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if (index($0, "[" ver "]")) found=1
+              next
+            }
+            found { print }
+          ' CHANGELOG.md)
+
+          # If extraction failed, fall back to tag annotation
+          if [ -z "$NOTES" ]; then
+            NOTES=$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME" 2>/dev/null || echo "Release $GITHUB_REF_NAME")
+          fi
+
+          # Write to file for gh release
+          echo "$NOTES" > /tmp/release-notes.md
+
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref_name }}
-          body: |
-            See [CHANGELOG.md](https://github.com/RiskVoid/n8n-nodes-riskvoid/blob/main/CHANGELOG.md) for details.
-          draft: false
-          prerelease: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "RiskVoid Security Scanner $GITHUB_REF_NAME" \
+            --notes-file /tmp/release-notes.md \
+            --verify-tag
