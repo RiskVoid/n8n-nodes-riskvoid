@@ -105,11 +105,23 @@ export class PromptInjectionRule implements DetectionRule {
 			if (!sinkNode) continue;
 
 			// Extract prompt content from various parameter formats
-			const promptContent = this.extractPromptContent(sinkNode.parameters);
+			let promptContent = this.extractPromptContent(sinkNode.parameters);
+
+			// If the prompt is just an expression reference, trace back to find actual content
+			promptContent = this.resolvePromptThroughExpressions(
+				promptContent,
+				taintPath.sink.nodeName,
+				context,
+			);
 
 			// Check for protection patterns
 			const protectionPatterns = this.findProtectionPatterns(promptContent);
 			const hasProtection = protectionPatterns.length > 0;
+
+			// Skip finding entirely when prompt protection is detected
+			if (hasProtection) {
+				continue;
+			}
 
 			// Check for high-risk patterns
 			const highRiskPatterns = this.findHighRiskPatterns(promptContent);
@@ -165,6 +177,77 @@ export class PromptInjectionRule implements DetectionRule {
 
 		// Fall back to stringifying all params
 		return JSON.stringify(params);
+	}
+
+	/**
+	 * Resolve prompt content by tracing expression references back through the workflow.
+	 * If the prompt is just an expression reference like {{ $json.safePrompt }},
+	 * find the Set node that constructs it and return that value instead.
+	 */
+	private resolvePromptThroughExpressions(
+		promptContent: string,
+		sinkNodeName: string,
+		context: RuleContext,
+	): string {
+		// Check if the prompt is primarily an expression reference
+		const exprMatch = promptContent.match(/^\s*=?\s*\{\{\s*\$json\.(\w+)\s*\}\}\s*$/);
+		if (!exprMatch) {
+			return promptContent; // Not a simple expression reference
+		}
+
+		const fieldName = exprMatch[1];
+
+		// Find the predecessor node (which should be a Set node that constructs the prompt)
+		const graphNode = context.graph.nodes.get(sinkNodeName);
+		if (!graphNode || graphNode.predecessors.length === 0) {
+			return promptContent;
+		}
+
+		// Check each predecessor for the field definition
+		for (const predName of graphNode.predecessors) {
+			const predNode = context.workflow.nodes.get(predName);
+			if (!predNode) continue;
+
+			// Look for the field in Set node parameters
+			if (predNode.type === 'n8n-nodes-base.set') {
+				// v1 format: values.string[].{name, value}
+				const values = predNode.parameters.values as Record<string, unknown> | undefined;
+				if (values) {
+					const stringValues = (values.string || []) as Array<{ name: string; value: string }>;
+					for (const sv of stringValues) {
+						if (sv.name === fieldName && typeof sv.value === 'string') {
+							return sv.value;
+						}
+					}
+				}
+
+				// v3.4 format: assignments.assignments[].{name, value}
+				const assignments = predNode.parameters.assignments as Record<string, unknown> | undefined;
+				if (assignments && Array.isArray(assignments.assignments)) {
+					for (const assign of assignments.assignments as Array<{ name: string; value: string }>) {
+						if (assign.name === fieldName && typeof assign.value === 'string') {
+							return assign.value;
+						}
+					}
+				}
+			}
+
+			// Recursively check if the predecessor also just passes through the value
+			// by trying to resolve from its own predecessor
+			const predGraphNode = context.graph.nodes.get(predName);
+			if (predGraphNode && predNode.type === 'n8n-nodes-base.set') {
+				const resolvedFromPred = this.resolvePromptThroughExpressions(
+					promptContent,
+					predName,
+					context,
+				);
+				if (resolvedFromPred !== promptContent) {
+					return resolvedFromPred;
+				}
+			}
+		}
+
+		return promptContent;
 	}
 
 	/**

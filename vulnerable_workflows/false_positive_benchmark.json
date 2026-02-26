@@ -1,0 +1,75 @@
+{
+    "name": "False Positive Benchmark",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "webhook",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                0,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "values": {
+                    "string": [
+                        {
+                            "name": "safeField",
+                            "value": "console.log('safe')"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Set Safe",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 1,
+            "position": [
+                200,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// eval is dangerous, but input is hardcoded safe string from Set node\neval($json.safeField);"
+            },
+            "name": "Code Safe Usage",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 1,
+            "position": [
+                400,
+                0
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Set Safe",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Safe": {
+            "main": [
+                [
+                    {
+                        "node": "Code Safe Usage",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

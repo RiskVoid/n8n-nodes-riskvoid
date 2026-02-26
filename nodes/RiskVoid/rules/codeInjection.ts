@@ -153,6 +153,13 @@ export class CodeInjectionRule implements DetectionRule {
 			if (!CODE_EXECUTION_NODE_TYPES.includes(node.type)) continue;
 			if (flaggedNodes.has(nodeName)) continue;
 
+			// Skip disabled nodes
+			if (node.disabled) continue;
+
+			// Skip disconnected nodes (in the graph but no predecessors = no data flows to them)
+			const graphNode = context.graph.nodes.get(nodeName);
+			if (graphNode && graphNode.predecessors.length === 0) continue;
+
 			const { codeContent, codeLanguage } = this.extractCodeContent(node);
 
 			// Check if code uses dangerous patterns

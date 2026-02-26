@@ -157,6 +157,7 @@ export class CredentialExposureRule implements DetectionRule {
 					nodeName,
 					node.type,
 					node.parameters,
+					context,
 				);
 				findings.push(...exposureFindings);
 			}
@@ -231,16 +232,27 @@ export class CredentialExposureRule implements DetectionRule {
 		nodeName: string,
 		nodeType: string,
 		params: Record<string, unknown>,
+		context?: RuleContext,
 	): Finding[] {
 		const findings: Finding[] = [];
 		const paramStr = JSON.stringify(params);
 
 		// Check if parameters reference credential-like fields
-		const hasCredentialRef = this.hasCredentialPattern(paramStr);
+		let hasCredentialRef = this.hasCredentialPattern(paramStr);
 
 		// Check if there are n8n expressions that might include credentials
 		const hasCredentialExpression =
 			/\{\{\s*\$[^}]*?(password|secret|token|key|auth|credential)/i.test(paramStr);
+
+		// Check if expressions reference upstream nodes whose parameters contain credential patterns
+		// e.g., Slack node references $('Format Login Event').item.json.message
+		// and the "Format Login Event" node builds a message from password/token fields
+		if (!hasCredentialRef && !hasCredentialExpression && context) {
+			const hasUpstreamCredentialRef = this.checkUpstreamCredentialPatterns(paramStr, context);
+			if (hasUpstreamCredentialRef) {
+				hasCredentialRef = true;
+			}
+		}
 
 		if (hasCredentialRef || hasCredentialExpression) {
 			findings.push({
@@ -275,6 +287,31 @@ export class CredentialExposureRule implements DetectionRule {
 		}
 
 		return findings;
+	}
+
+	/**
+	 * Check if expressions in parameters reference upstream nodes
+	 * whose output fields contain credential-like patterns.
+	 * This catches cases like: Slack sends $('Format Login Event').item.json.message
+	 * where "Format Login Event" builds that message from password/token fields.
+	 */
+	private checkUpstreamCredentialPatterns(paramStr: string, context: RuleContext): boolean {
+		// Extract node references from expressions: $('NodeName')
+		const nodeRefPattern = /\$\(['"]([^'"]+)['"]\)/g;
+		let match;
+
+		while ((match = nodeRefPattern.exec(paramStr)) !== null) {
+			const referencedNodeName = match[1];
+			const referencedNode = context.workflow.nodes.get(referencedNodeName);
+			if (referencedNode) {
+				const refParamStr = JSON.stringify(referencedNode.parameters);
+				if (this.hasCredentialPattern(refParamStr)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**

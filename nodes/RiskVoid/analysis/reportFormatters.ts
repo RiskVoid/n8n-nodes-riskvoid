@@ -162,6 +162,7 @@ const CATEGORY_LABELS: Record<FindingCategory, string> = {
 	'prompt-injection': 'Prompt Injection',
 	configuration: 'Security Misconfiguration',
 	'information-disclosure': 'Information Disclosure',
+	'prototype-pollution': 'Prototype Pollution',
 };
 
 // ============================================================================

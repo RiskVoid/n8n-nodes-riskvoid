@@ -16,7 +16,8 @@ export type FindingCategory =
 	| 'credential-exposure'
 	| 'prompt-injection'
 	| 'configuration'
-	| 'information-disclosure';
+	| 'information-disclosure'
+	| 'prototype-pollution';
 
 /**
  * Severity level for findings

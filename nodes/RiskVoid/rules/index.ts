@@ -27,10 +27,14 @@ import { PromptInjectionRule } from './promptInjection';
 import { CredentialExposureRule } from './credentialExposure';
 import { XssRule } from './xss';
 
+import { PrototypePollutionRule } from './prototypePollution';
+
 /**
  * Registry of all detection rules
  */
 const ruleRegistry: DetectionRule[] = [];
+// ... (skip down to exports) ...
+
 
 /**
  * Register a detection rule
@@ -323,6 +327,7 @@ export function initializeBuiltInRules(): void {
 	registerRule(new PromptInjectionRule());
 	registerRule(new CredentialExposureRule());
 	registerRule(new XssRule());
+	registerRule(new PrototypePollutionRule());
 }
 
 // Export rule classes for direct use
@@ -333,6 +338,7 @@ export { SsrfRule } from './ssrf';
 export { PromptInjectionRule } from './promptInjection';
 export { CredentialExposureRule } from './credentialExposure';
 export { XssRule } from './xss';
+export { PrototypePollutionRule } from './prototypePollution';
 
 /**
  * Clear all registered rules (useful for testing)
