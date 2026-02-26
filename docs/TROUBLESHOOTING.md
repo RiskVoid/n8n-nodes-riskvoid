@@ -294,7 +294,7 @@ Common issues and solutions when using RiskVoid.
    - RiskVoid recognizes these as sanitizers
 
 4. **Report false positives**:
-   - [Create GitHub issue](https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/issues)
+   - [Create GitHub issue](https://github.com/RiskVoid/n8n-nodes-riskvoid/issues)
    - Include workflow JSON (sanitize secrets first!)
    - Helps improve detection rules
 
@@ -415,7 +415,7 @@ Common issues and solutions when using RiskVoid.
 
 **Solutions**:
 - Note the rule ID
-- [Report as bug](https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/issues)
+- [Report as bug](https://github.com/RiskVoid/n8n-nodes-riskvoid/issues)
 - Include workflow JSON (sanitized)
 - Workaround: Disable that category temporarily
 
@@ -474,7 +474,7 @@ If this works, issue is with your specific workflow.
 ### Before reporting an issue:
 
 1. ✅ Check this troubleshooting guide
-2. ✅ Search [existing issues](https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/issues)
+2. ✅ Search [existing issues](https://github.com/RiskVoid/n8n-nodes-riskvoid/issues)
 3. ✅ Test with latest version
 4. ✅ Collect error messages and logs
 
@@ -489,7 +489,7 @@ Include:
 - Steps to reproduce
 - Workflow JSON (sanitized!)
 
-📝 [Create issue on GitHub](https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/issues/new)
+📝 [Create issue on GitHub](https://github.com/RiskVoid/n8n-nodes-riskvoid/issues/new)
 
 ### Get help:
 

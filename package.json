@@ -3,7 +3,7 @@
 	"version": "1.2.0",
 	"description": "RiskVoid Security - Your ultimate n8n workflow security scanner. Detect code injection, SSRF, SQL injection, prompt injection, and credential exposure before they reach production.",
 	"license": "MIT",
-	"homepage": "https://github.com/ruslan-sazonov/n8n-nodes-riskvoid#readme",
+	"homepage": "https://github.com/RiskVoid/n8n-nodes-riskvoid#readme",
 	"keywords": [
 		"n8n-community-node-package",
 		"n8n",
@@ -19,10 +19,10 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/ruslan-sazonov/n8n-nodes-riskvoid.git"
+		"url": "git+https://github.com/RiskVoid/n8n-nodes-riskvoid.git"
 	},
 	"bugs": {
-		"url": "https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/issues",
+		"url": "https://github.com/RiskVoid/n8n-nodes-riskvoid/issues",
 		"email": "hello@riskvoid.com"
 	},
 	"scripts": {

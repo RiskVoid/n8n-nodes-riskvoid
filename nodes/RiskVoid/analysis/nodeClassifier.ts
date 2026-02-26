@@ -20,17 +20,20 @@ import nodeDefinitions from '../config/nodeDefinitions.json';
 /**
  * Registry of source nodes (nodes that receive external input)
  */
-const SOURCE_NODES: Record<string, Omit<SourceClassification, 'role'>> = nodeDefinitions.sources as any;
+const SOURCE_NODES: Record<string, Omit<SourceClassification, 'role'>> =
+	nodeDefinitions.sources as Record<string, Omit<SourceClassification, 'role'>>;
 
 /**
  * Registry of sink nodes (nodes that perform dangerous operations)
  */
-const SINK_NODES: Record<string, Omit<SinkClassification, 'role'>> = nodeDefinitions.sinks as any;
+const SINK_NODES: Record<string, Omit<SinkClassification, 'role'>> =
+	nodeDefinitions.sinks as Record<string, Omit<SinkClassification, 'role'>>;
 
 /**
  * Registry of sanitizer nodes (nodes that can reduce taint)
  */
-const SANITIZER_NODES: Record<string, Omit<SanitizerClassification, 'role'>> = nodeDefinitions.sanitizers as any;
+const SANITIZER_NODES: Record<string, Omit<SanitizerClassification, 'role'>> =
+	nodeDefinitions.sanitizers as Record<string, Omit<SanitizerClassification, 'role'>>;
 
 /**
  * Classify a node based on its type

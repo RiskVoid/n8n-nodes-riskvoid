@@ -31,18 +31,9 @@ describe('False Positive Benchmark', () => {
 
         const result = runAllRules(ruleContext);
 
-        if (result.errors.length > 0) {
-            console.log('Errors:', JSON.stringify(result.errors, null, 2));
-        }
-
         // Check for the specific Taint Analysis finding (Remote Code Execution)
         // The "Potential Code Execution" finding might still exist as a fallback, which is acceptable behavior
         const taintFindings = result.findings.filter(f => f.title === 'Remote Code Execution via User Input');
-
-        if (taintFindings.length > 0) {
-            console.log('Found Taint Findings (False Positives):');
-            taintFindings.forEach(f => console.log(`- ${f.title} (${f.sink.node})`));
-        }
 
         expect(taintFindings.length).toBe(0);
     });

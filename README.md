@@ -218,7 +218,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ```bash
 # Clone repository
-git clone https://github.com/ruslan-sazonov/n8n-nodes-riskvoid.git
+git clone https://github.com/RiskVoid/n8n-nodes-riskvoid.git
 cd n8n-nodes-riskvoid
 
 # Install dependencies
@@ -236,9 +236,9 @@ npm run lint
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/issues)
+- **Issues**: [GitHub Issues](https://github.com/RiskVoid/n8n-nodes-riskvoid/issues)
 - **Email**: [hello@riskvoid.com](mailto:hello@riskvoid.com)
-- **Documentation**: [Wiki](https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/wiki)
+- **Documentation**: [Wiki](https://github.com/RiskVoid/n8n-nodes-riskvoid/wiki)
 
 ## License
 

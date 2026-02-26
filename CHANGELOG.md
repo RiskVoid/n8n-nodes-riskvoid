@@ -152,8 +152,8 @@ First public release of RiskVoid Security Scanner for n8n workflows.
 
 ---
 
-[unreleased]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.2.0...HEAD
-[1.2.0]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.1.1...v1.2.0
-[1.1.1]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.1.0...v1.1.1
-[1.1.0]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/ruslan-sazonov/n8n-nodes-riskvoid/releases/tag/v1.0.0
+[unreleased]: https://github.com/RiskVoid/n8n-nodes-riskvoid/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/RiskVoid/n8n-nodes-riskvoid/compare/v1.1.1...v1.2.0
+[1.1.1]: https://github.com/RiskVoid/n8n-nodes-riskvoid/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/RiskVoid/n8n-nodes-riskvoid/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/RiskVoid/n8n-nodes-riskvoid/releases/tag/v1.0.0

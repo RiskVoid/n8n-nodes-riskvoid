@@ -1,6 +1,7 @@
 
 import { PrototypePollutionRule } from '../../nodes/RiskVoid/rules/prototypePollution';
 import { RuleContext } from '../../nodes/RiskVoid/rules/types';
+import { N8nNode } from '../../nodes/RiskVoid/types/workflow';
 
 describe('PrototypePollutionRule', () => {
     let rule: PrototypePollutionRule;
@@ -18,7 +19,7 @@ describe('PrototypePollutionRule', () => {
             sources: [],
             sinks: [],
             taintPaths: [],
-        } as any;
+        } as unknown as RuleContext;
     });
 
     it('should detect __proto__ assignment in JS Code', () => {
@@ -29,7 +30,7 @@ describe('PrototypePollutionRule', () => {
                 jsCode: 'const x = {}; x.__proto__.polluted = true;',
             },
         };
-        mockContext.workflow.nodes.set('Code', node as any);
+        mockContext.workflow.nodes.set('Code', node as unknown as N8nNode);
 
         const findings = rule.detect(mockContext);
         expect(findings).toHaveLength(1);
@@ -45,7 +46,7 @@ describe('PrototypePollutionRule', () => {
                 jsCode: 'someObj.constructor.prototype.isAdmin = true;',
             },
         };
-        mockContext.workflow.nodes.set('Code', node as any);
+        mockContext.workflow.nodes.set('Code', node as unknown as N8nNode);
 
         const findings = rule.detect(mockContext);
         expect(findings).toHaveLength(1);
@@ -60,7 +61,7 @@ describe('PrototypePollutionRule', () => {
                 jsCode: 'const x = {}; x.property = true;',
             },
         };
-        mockContext.workflow.nodes.set('SafeCode', node as any);
+        mockContext.workflow.nodes.set('SafeCode', node as unknown as N8nNode);
 
         const findings = rule.detect(mockContext);
         expect(findings).toHaveLength(0);
